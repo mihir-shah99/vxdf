@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -16,24 +15,70 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-.env
-.venv
-venv/
-ENV/
-.pytest_cache/
 .coverage
 htmlcov/
+.pytest_cache/
+.tox/
+.coverage.*
+nosetests.xml
+coverage.xml
+venv/
+env/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+.eslintcache
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+frontend/dist/
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.settings/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+temp/
+output/
+*.lock
+!.uv.lock
+uv.lock
 
 # Node.js / Frontend
-node_modules/
 /dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
 .DS_Store
 *.local
 .env.local
@@ -50,22 +95,10 @@ yarn-error.log*
 *.sln
 *.sw?
 
-# SQLite database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Log files
-*.log
-logs/
-
 # Temporary files
 temp/
 .tmp/
 tmp/
-
-# Output files
-output/
 
 # VS Code
 .vscode/*
@@ -75,23 +108,14 @@ output/
 !.vscode/launch.json
 
 # macOS specific
-.DS_Store
 .AppleDouble
 .LSOverride
 Icon
-._*
 .DocumentRevisions-V100
 .fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 
 # Windows specific
-Thumbs.db
-ehthumbs.db
-Desktop.ini
 $RECYCLE.BIN/
 *.cab
 *.msi
@@ -99,10 +123,6 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 
-# Bolt.new and Replit specific files
-.bolt/
-.bolt
-.replit
-.replit/
+# Project specific temporary files
 .breakpoints
 .upm/ 

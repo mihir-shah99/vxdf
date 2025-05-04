@@ -1,92 +1,99 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
-import { ArrowUp as FileArrowUp, GitBranch, Check, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import { Vulnerability, getStats, uploadScanFile } from './api/validateVulnerability';
 
 function App() {
   const [activeView, setActiveView] = useState('dashboard');
-  const [validatedVulnerabilities, setValidatedVulnerabilities] = useState([]);
+  const [validatedVulnerabilities, setValidatedVulnerabilities] = useState<Vulnerability[]>([]);
   const [isValidating, setIsValidating] = useState(false);
-  const [validationStats, setValidationStats] = useState({
+  const [validationStats, setValidationStats] = useState<{
+    total: number;
+    confirmed: number;
+    falsePositive: number;
+    inProgress: number;
+  }>({
     total: 0,
     confirmed: 0,
     falsePositive: 0,
     inProgress: 0
   });
-
-  const handleFileUpload = async (files) => {
-    setIsValidating(true);
-    
-    // Simulate validation process
-    setTimeout(() => {
-      const newValidatedVulns = [
-        {
-          id: "VUL-001",
-          title: "SQL Injection in Login Form",
-          severity: "Critical",
-          category: "Injection",
-          exploitable: true,
-          evidence: "User input flows directly into SQL query without sanitization",
-          source: {
-            file: "src/controllers/AuthController.js",
-            line: 42,
-            snippet: "db.query(`SELECT * FROM users WHERE username='${req.body.username}'`)"
-          },
-          sink: {
-            file: "src/database/queries.js",
-            line: 15,
-            snippet: "return connection.query(queryString);"
-          }
-        },
-        {
-          id: "VUL-002",
-          title: "Cross-Site Scripting in Profile Page",
-          severity: "High",
-          category: "XSS",
-          exploitable: true,
-          evidence: "User profile data rendered without escaping HTML entities",
-          source: {
-            file: "src/components/Profile.js",
-            line: 28,
-            snippet: "div.innerHTML = userData.bio;"
-          },
-          sink: {
-            file: "src/components/Profile.js",
-            line: 28,
-            snippet: "div.innerHTML = userData.bio;"
-          }
-        },
-        {
-          id: "VUL-003",
-          title: "Potential Path Traversal",
-          severity: "Medium",
-          category: "Path Traversal",
-          exploitable: false,
-          evidence: "Input validation prevents directory traversal sequences",
-          source: {
-            file: "src/utils/fileHelper.js",
-            line: 53,
-            snippet: "const filePath = req.params.fileName;"
-          },
-          sink: {
-            file: "src/utils/fileHelper.js",
-            line: 55,
-            snippet: "if (filePath.includes('../')) return res.status(400).send('Invalid filename');"
-          }
-        }
-      ];
-      
-      setValidatedVulnerabilities(newValidatedVulns);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch initial stats on component mount
+  useEffect(() => {
+    fetchStats();
+  }, []);
+  
+  // Function to fetch dashboard stats
+  const fetchStats = async () => {
+    try {
+      const stats = await getStats();
       setValidationStats({
-        total: newValidatedVulns.length,
-        confirmed: newValidatedVulns.filter(v => v.exploitable).length,
-        falsePositive: newValidatedVulns.filter(v => !v.exploitable).length,
-        inProgress: 0
+        total: stats.total,
+        confirmed: stats.exploitable,
+        falsePositive: stats.nonExploitable,
+        inProgress: stats.inProgress
       });
+      
+      if (stats.recentFindings && stats.recentFindings.length > 0) {
+        setValidatedVulnerabilities(stats.recentFindings);
+      }
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+      setError('Failed to fetch dashboard statistics');
+    }
+  };
+
+  const handleFileUpload = async (files: File[]) => {
+    if (!files || !files.length) return;
+    
+    setIsValidating(true);
+    setError(null);
+    
+    try {
+      // Upload first file (can be extended to support multiple files)
+      const file = files[0];
+      
+      // Determine parser type based on file extension
+      let parserType = 'sarif';
+      if (file.name.endsWith('.xml') || file.name.endsWith('.json') && file.name.includes('cyclone')) {
+        parserType = 'cyclonedx';
+      } else if (file.name.endsWith('.xml') || file.name.endsWith('.json') && file.name.includes('zap')) {
+        parserType = 'dast';
+      }
+      
+      const result = await uploadScanFile(file, {
+        parserType,
+        validate: true,
+        targetName: 'Uploaded Application',
+        minSeverity: 'LOW'
+      });
+      
+      if (result.success) {
+        setValidatedVulnerabilities(result.findings);
+        setValidationStats(prev => ({
+          ...prev,
+          total: result.findings.length,
+          confirmed: result.findings.filter(v => v.exploitable).length,
+          falsePositive: result.findings.filter(v => v.exploitable === false).length,
+          inProgress: 0
+        }));
+        
+        // Switch to dashboard view to show results
+        setActiveView('dashboard');
+      } else {
+        setError('File upload failed: ' + result.message);
+      }
+    } catch (err) {
+      console.error('Error during file validation:', err);
+      setError('File validation failed: ' + ((err as Error)?.message || 'Unknown error'));
+    } finally {
       setIsValidating(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -95,6 +102,19 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
         <main className="flex-1 overflow-auto p-6">
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              <span>{error}</span>
+              <button 
+                className="ml-auto text-red-700 hover:text-red-900"
+                onClick={() => setError(null)}
+              >
+                ×
+              </button>
+            </div>
+          )}
+          
           {activeView === 'dashboard' && (
             <Dashboard 
               validatedVulnerabilities={validatedVulnerabilities} 

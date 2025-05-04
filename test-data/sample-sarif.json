@@ -1,0 +1,316 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Test Security Scanner",
+          "version": "1.0.0",
+          "informationUri": "https://example.com/security-scanner",
+          "rules": [
+            {
+              "id": "SQL001",
+              "shortDescription": {
+                "text": "SQL Injection"
+              },
+              "fullDescription": {
+                "text": "SQL injection vulnerabilities occur when user input is directly included in SQL queries without proper sanitization."
+              },
+              "helpUri": "https://example.com/rules/sql-injection",
+              "properties": {
+                "category": "Security",
+                "severity": "Critical",
+                "cwe": "CWE-89"
+              }
+            },
+            {
+              "id": "XSS001",
+              "shortDescription": {
+                "text": "Cross-Site Scripting"
+              },
+              "fullDescription": {
+                "text": "Cross-site scripting vulnerabilities allow attackers to inject client-side scripts into web pages viewed by other users."
+              },
+              "helpUri": "https://example.com/rules/xss",
+              "properties": {
+                "category": "Security",
+                "severity": "High",
+                "cwe": "CWE-79"
+              }
+            },
+            {
+              "id": "PATH001",
+              "shortDescription": {
+                "text": "Path Traversal"
+              },
+              "fullDescription": {
+                "text": "Path traversal vulnerabilities allow attackers to access files outside of the intended directory."
+              },
+              "helpUri": "https://example.com/rules/path-traversal",
+              "properties": {
+                "category": "Security",
+                "severity": "Medium",
+                "cwe": "CWE-22"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "SQL001",
+          "level": "error",
+          "message": {
+            "text": "SQL Injection vulnerability detected in login function"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/controllers/auth.js"
+                },
+                "region": {
+                  "startLine": 42,
+                  "startColumn": 12,
+                  "endLine": 42,
+                  "endColumn": 60
+                }
+              }
+            }
+          ],
+          "codeFlows": [
+            {
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/controllers/auth.js"
+                          },
+                          "region": {
+                            "startLine": 40,
+                            "startColumn": 12,
+                            "endLine": 40,
+                            "endColumn": 40
+                          }
+                        },
+                        "message": {
+                          "text": "User input from request"
+                        }
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/controllers/auth.js"
+                          },
+                          "region": {
+                            "startLine": 41,
+                            "startColumn": 12,
+                            "endLine": 41,
+                            "endColumn": 50
+                          }
+                        },
+                        "message": {
+                          "text": "Variable assigned without sanitization"
+                        }
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/controllers/auth.js"
+                          },
+                          "region": {
+                            "startLine": 42,
+                            "startColumn": 12,
+                            "endLine": 42,
+                            "endColumn": 60
+                          }
+                        },
+                        "message": {
+                          "text": "Variable used in SQL query"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "Critical",
+            "category": "sql_injection"
+          }
+        },
+        {
+          "ruleId": "XSS001",
+          "level": "error",
+          "message": {
+            "text": "Cross-Site Scripting vulnerability detected in profile rendering"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/components/Profile.js"
+                },
+                "region": {
+                  "startLine": 28,
+                  "startColumn": 8,
+                  "endLine": 28,
+                  "endColumn": 36
+                }
+              }
+            }
+          ],
+          "codeFlows": [
+            {
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/components/Profile.js"
+                          },
+                          "region": {
+                            "startLine": 25,
+                            "startColumn": 8,
+                            "endLine": 25,
+                            "endColumn": 30
+                          }
+                        },
+                        "message": {
+                          "text": "User profile data retrieved from API"
+                        }
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/components/Profile.js"
+                          },
+                          "region": {
+                            "startLine": 28,
+                            "startColumn": 8,
+                            "endLine": 28,
+                            "endColumn": 36
+                          }
+                        },
+                        "message": {
+                          "text": "Unsanitized data assigned to innerHTML"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "High",
+            "category": "xss"
+          }
+        },
+        {
+          "ruleId": "PATH001",
+          "level": "warning",
+          "message": {
+            "text": "Potential Path Traversal vulnerability in file handling"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/utils/fileHelper.js"
+                },
+                "region": {
+                  "startLine": 53,
+                  "startColumn": 12,
+                  "endLine": 53,
+                  "endColumn": 45
+                }
+              }
+            }
+          ],
+          "codeFlows": [
+            {
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/utils/fileHelper.js"
+                          },
+                          "region": {
+                            "startLine": 53,
+                            "startColumn": 12,
+                            "endLine": 53,
+                            "endColumn": 45
+                          }
+                        },
+                        "message": {
+                          "text": "File path from user input"
+                        }
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/utils/fileHelper.js"
+                          },
+                          "region": {
+                            "startLine": 55,
+                            "startColumn": 12,
+                            "endLine": 55,
+                            "endColumn": 70
+                          }
+                        },
+                        "message": {
+                          "text": "Validation prevents directory traversal"
+                        }
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/utils/fileHelper.js"
+                          },
+                          "region": {
+                            "startLine": 58,
+                            "startColumn": 12,
+                            "endLine": 58,
+                            "endColumn": 40
+                          }
+                        },
+                        "message": {
+                          "text": "File access with validated path"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "severity": "Medium",
+            "category": "path_traversal"
+          }
+        }
+      ]
+    }
+  ]
+} 

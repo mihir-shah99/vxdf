@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, File, FileText, FileJson, X, CheckCircle } from 'lucide-react';
+import { Upload, File, FileText, FileJson, X } from 'lucide-react';
 
 interface FileUploadProps {
   onUpload: (files: File[]) => void;
@@ -9,6 +9,7 @@ interface FileUploadProps {
 export const FileUpload: React.FC<FileUploadProps> = ({ onUpload, isUploading }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [parserType, setParserType] = useState('sarif');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -30,6 +31,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUpload, isUploading })
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const filesArray = Array.from(e.dataTransfer.files);
       setSelectedFiles(filesArray);
+      
+      // Auto-detect parser type based on file extension
+      const file = filesArray[0];
+      detectParserType(file);
     }
   };
 
@@ -37,7 +42,23 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUpload, isUploading })
     if (e.target.files && e.target.files.length > 0) {
       const filesArray = Array.from(e.target.files);
       setSelectedFiles(filesArray);
+      
+      // Auto-detect parser type based on file extension
+      const file = filesArray[0];
+      detectParserType(file);
     }
+  };
+  
+  const detectParserType = (file: File) => {
+    let detectedType = 'sarif';
+    
+    if (file.name.endsWith('.xml') || (file.name.endsWith('.json') && file.name.includes('cyclone'))) {
+      detectedType = 'cyclonedx';
+    } else if (file.name.includes('zap') || file.name.includes('burp') || file.name.includes('dast')) {
+      detectedType = 'dast';
+    }
+    
+    setParserType(detectedType);
   };
 
   const handleSubmit = () => {
@@ -120,19 +141,42 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUpload, isUploading })
                 <button
                   onClick={() => handleRemoveFile(index)}
                   className="p-1 rounded-full hover:bg-gray-100"
+                  disabled={isUploading}
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </li>
             ))}
           </ul>
-          <div className="px-6 py-4 bg-gray-50">
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label htmlFor="parser-type" className="block text-sm font-medium text-gray-700 mb-1">
+                  Parser Type
+                </label>
+                <select
+                  id="parser-type"
+                  value={parserType}
+                  onChange={(e) => setParserType(e.target.value)}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                  disabled={isUploading}
+                >
+                  <option value="sarif">SARIF (SAST Results)</option>
+                  <option value="cyclonedx">CycloneDX (SCA Results)</option>
+                  <option value="dast">DAST Reports</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Auto-detected based on file extension
+                </p>
+              </div>
+            </div>
+            
             <button
               type="button"
               onClick={handleSubmit}
               disabled={isUploading}
               className={`w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                isUploading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                isUploading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
               {isUploading ? (

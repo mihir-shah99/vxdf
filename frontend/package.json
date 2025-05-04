@@ -1,8 +1,9 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "vxdf-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "author": "Mihir Shah <mihir@mihirshah.tech>",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
