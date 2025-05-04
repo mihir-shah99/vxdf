@@ -1,0 +1,209 @@
+{% extends 'layout.html' %}
+
+{% block title %}VXDF Validate - Security Validation Tool{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-opacity-75">
+                <h2 class="card-title"><i class="bi bi-shield-check"></i> VXDF Validate</h2>
+                <p class="card-subtitle">Security Validation Tool for SAST, DAST, and SCA Outputs</p>
+            </div>
+            <div class="card-body">
+                <p>
+                    Validate the exploitability of security vulnerabilities by processing scanner outputs and producing standardized
+                    <strong>Validated Exploitable Data Flow (VXDF)</strong> output with detailed evidence.
+                </p>
+                <p>
+                    <i class="bi bi-check-circle-fill text-success"></i> <strong>Reduce false positives</strong> by confirming exploitability
+                    <br>
+                    <i class="bi bi-check-circle-fill text-success"></i> <strong>Generate standardized</strong> vulnerability reports
+                    <br>
+                    <i class="bi bi-check-circle-fill text-success"></i> <strong>Provide detailed evidence</strong> of exploitability
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-upload"></i> Upload Security Findings</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Security Scanner Output File</label>
+                        <input class="form-control" type="file" id="file" name="file" required>
+                        <div class="form-text">Supported formats: SARIF (SAST), CycloneDX (SCA), DAST JSON outputs</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="parser_type" class="form-label">File Type</label>
+                        <select class="form-select" id="parser_type" name="parser_type">
+                            <option value="sarif">SARIF (SAST)</option>
+                            <option value="cyclonedx">CycloneDX (SCA)</option>
+                            <option value="dast">DAST Output</option>
+                        </select>
+                        <div class="form-text">Select the type of security findings file</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="target_name" class="form-label">Target Application Name</label>
+                            <input type="text" class="form-control" id="target_name" name="target_name" placeholder="MyApplication">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="target_version" class="form-label">Target Version (optional)</label>
+                            <input type="text" class="form-control" id="target_version" name="target_version" placeholder="1.0.0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Vulnerability Types to Process</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="all" id="vuln_all" name="vuln_types" checked>
+                            <label class="form-check-label" for="vuln_all">
+                                All vulnerabilities
+                            </label>
+                        </div>
+                        {% for vuln_type in supported_vuln_types %}
+                        <div class="form-check">
+                            <input class="form-check-input vuln-type-check" type="checkbox" value="{{ vuln_type }}" id="vuln_{{ vuln_type }}" name="vuln_types">
+                            <label class="form-check-label" for="vuln_{{ vuln_type }}">
+                                {{ vuln_type|replace('_', ' ')|title }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="min_severity" class="form-label">Minimum Severity</label>
+                        <select class="form-select" id="min_severity" name="min_severity">
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW" selected>Low</option>
+                            <option value="INFORMATIONAL">Informational</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="validate" name="validate" value="true" checked>
+                        <label class="form-check-label" for="validate">Validate exploitability (slower but more accurate)</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-arrow-right-circle"></i> Process File
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-bar-chart"></i> Dashboard</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="d-flex flex-column align-items-center p-3 border rounded">
+                            <span class="fs-4 fw-bold text-primary">{{ total_findings }}</span>
+                            <span class="small text-muted">Total Findings</span>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="d-flex flex-column align-items-center p-3 border rounded">
+                            <span class="fs-4 fw-bold text-info">{{ validated_findings }}</span>
+                            <span class="small text-muted">Validated</span>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="d-flex flex-column align-items-center p-3 border rounded">
+                            <span class="fs-4 fw-bold text-danger">{{ exploitable_findings }}</span>
+                            <span class="small text-muted">Exploitable</span>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="d-flex flex-column align-items-center p-3 border rounded">
+                            <span class="fs-4 fw-bold text-success">{{ non_exploitable_findings }}</span>
+                            <span class="small text-muted">False Positives</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="bi bi-clock-history"></i> Recent Findings</h3>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_findings %}
+                <ul class="list-group list-group-flush">
+                    {% for finding in recent_findings %}
+                    <li class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 text-truncate" title="{{ finding.name }}">{{ finding.name }}</h6>
+                            {% if finding.is_exploitable == True %}
+                                <span class="badge bg-danger">Exploitable</span>
+                            {% elif finding.is_exploitable == False %}
+                                <span class="badge bg-success">Not Exploitable</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Not Validated</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">
+                            {% if finding.vulnerability_type %}
+                                <span class="badge bg-secondary">{{ finding.vulnerability_type|replace('_', ' ')|title }}</span>
+                            {% endif %}
+                            {% if finding.severity %}
+                                <span class="badge 
+                                    {% if finding.severity == 'CRITICAL' %}bg-danger
+                                    {% elif finding.severity == 'HIGH' %}bg-warning text-dark
+                                    {% elif finding.severity == 'MEDIUM' %}bg-info text-dark
+                                    {% elif finding.severity == 'LOW' %}bg-success
+                                    {% else %}bg-secondary
+                                    {% endif %}">
+                                    {{ finding.severity }}
+                                </span>
+                            {% endif %}
+                        </small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="text-muted">No findings available yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle "All vulnerabilities" checkbox
+        const allVulnCheckbox = document.getElementById('vuln_all');
+        const vulnTypeCheckboxes = document.querySelectorAll('.vuln-type-check');
+        
+        allVulnCheckbox.addEventListener('change', function() {
+            vulnTypeCheckboxes.forEach(checkbox => {
+                checkbox.disabled = this.checked;
+            });
+        });
+        
+        vulnTypeCheckboxes.forEach(checkbox => {
+            checkbox.disabled = allVulnCheckbox.checked;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+
+{% block title %}Server Error - VXDF Validate{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
+    <div class="text-center">
+        <h1 class="display-1">500</h1>
+        <h2 class="mb-4">Server Error</h2>
+        <p class="lead mb-5">Something went wrong on our end. Please try again later.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <i class="bi bi-house-door"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}
