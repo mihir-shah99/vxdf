@@ -7,16 +7,16 @@ This guide provides instructions on how to start the VXDF (Validated eXploitable
 Before starting the application, ensure you have completed the installation steps described in the [Installation Guide](../INSTALLATION.md), including:
 
 - Python 3.9+ installed
-- Node.js 18+ installed
-- All dependencies installed via `./scripts/setup.sh`
+- Node.js 16+ installed
+- All dependencies installed 
 
 ## Using the Startup Script
 
-VXDF includes a comprehensive startup script that launches both the backend API and frontend development server, while performing basic tests to ensure everything is working properly.
+VXDF includes a comprehensive startup script that launches both the backend API and frontend development server, with automatic path fixing and environment setup.
 
 ### Standard Startup (Recommended)
 
-To start the application with automatic testing:
+To start the application:
 
 ```bash
 # Navigate to the project root directory
@@ -33,43 +33,42 @@ cd vxdf/scripts
 ./startup.sh
 ```
 
-The startup script will:
+You can also customize the ports used by the API and frontend:
 
-1. Check for port conflicts (5001 for API, 5173 for frontend)
-2. Ensure the database file exists
-3. Start the API server
-4. Test critical API endpoints
-5. Verify database connectivity
-6. Start the frontend development server
-7. Confirm the frontend is responding
+```bash
+# Run API on port 8000 and frontend on port 3000
+./scripts/startup.sh 8000 3000
+```
 
-Once all tests pass, you'll see a success message with URLs for the API and frontend. The application will be accessible at:
+The startup script performs the following steps:
 
-- **Frontend:** http://localhost:5173
-- **API:** http://localhost:5001
+1. Sets up the PYTHONPATH to include the project root
+2. Runs the `fix_paths.py` script to ensure consistent path handling
+3. Runs the `fix_templates.py` script to create necessary symlinks and template files
+4. Creates required directories if they don't exist
+5. Checks for port conflicts
+6. Starts the API server
+7. Starts the frontend development server
+
+Once started, you'll see a success message with URLs for the API and frontend. The application will be accessible at:
+
+- **Frontend:** http://localhost:5173 (or your custom port)
+- **API:** http://localhost:5001 (or your custom port)
 
 To stop the application, press `Ctrl+C` in the terminal where the startup script is running.
 
 ### Alternative Startup Methods
 
-If you need more control over the startup process, you can use these alternative methods:
+If you prefer to run components separately:
 
-#### Start All Components (Without Testing)
-
-```bash
-./scripts/start.sh
-```
-
-This starts both the API and frontend servers without performing tests.
-
-#### Start Only the API
+#### Start Only the API Server
 
 ```bash
 cd api
 python3 main.py
 ```
 
-The API will be available at http://localhost:5001.
+The API will be available at http://localhost:5001 by default.
 
 #### Start Only the Frontend
 
@@ -78,13 +77,13 @@ cd frontend
 npm run dev
 ```
 
-The frontend will be available at http://localhost:5173.
+The frontend will be available at http://localhost:5173 by default.
 
 ## Verifying the Application
 
 After starting the application, you can verify it's working correctly by:
 
-1. Opening http://localhost:5173 in your browser - you should see the VXDF frontend dashboard
+1. Opening the frontend URL in your browser - you should see the VXDF frontend dashboard
 2. Testing the API directly:
    ```bash
    curl http://localhost:5001/api/stats
@@ -92,67 +91,85 @@ After starting the application, you can verify it's working correctly by:
 
 ## Troubleshooting
 
-If you encounter issues starting the application:
-
 ### Path and File Reference Issues
 
-The application has been refactored to use consistent path handling. If you see errors related to paths or file not found:
+If you encounter path-related errors:
 
-1. The startup script automatically runs a path fixing script to ensure consistent path references
-2. Make sure symlinks are properly set up (the script should handle this automatically)
-3. If issues persist, you can manually run the path fixing script:
+1. Run the path fixing scripts manually:
    ```bash
    python3 scripts/fix_paths.py
+   python3 scripts/fix_templates.py
    ```
 
-### Template Files Not Found
-
-If you see an error like "jinja2.exceptions.TemplateNotFound: index.html" when accessing the web interface:
-
-1. The application is looking for template and static files in the project root
-2. Create symlinks to the engine templates and static directories:
+2. Verify that the symlinks exist in the project root:
    ```bash
-   cd /path/to/vxdf
+   ls -la | grep -E 'templates|static'
+   ```
+
+3. If symlinks are missing, create them:
+   ```bash
    ln -s engine/templates templates
    ln -s engine/static static
    ```
-3. Restart the application
 
 ### Port Conflicts
 
-If you see an error about ports already in use, find and stop the processes using those ports:
+If you see an error about ports already in use:
 
-```bash
-# Find process using port 5001 (API)
-lsof -i :5001
+1. Specify different ports when running the startup script:
+   ```bash
+   ./scripts/startup.sh 5002 5174
+   ```
 
-# Find process using port 5173 (Frontend)
-lsof -i :5173
-
-# Kill a process by PID
-kill <PID>
-```
+2. Or find and stop the processes using the default ports:
+   ```bash
+   # Find process using port 5001 (API)
+   lsof -i :5001
+   
+   # Find process using port 5173 (Frontend)
+   lsof -i :5173
+   
+   # Kill a process by PID
+   kill <PID>
+   
+   # Force kill if necessary
+   kill -9 <PID>
+   ```
 
 ### Database Issues
 
-If database connection fails:
+If database errors occur:
+
 1. Check if the database file exists at `./vxdf_validate.db`
-2. If not, create an empty file: `touch vxdf_validate.db`
+2. If issues persist, remove and recreate the database file:
+   ```bash
+   rm vxdf_validate.db
+   touch vxdf_validate.db
+   ```
 
-### Backend Crashes
+### Module Import Errors
 
-If the API server crashes, check the logs in the `logs/` directory for error details.
+If you see errors like `ModuleNotFoundError: No module named 'api.server'`:
 
-### Frontend Build Issues
+1. Make sure the PYTHONPATH includes the project root:
+   ```bash
+   export PYTHONPATH=/path/to/vxdf:$PYTHONPATH
+   ```
 
-If the frontend fails to start:
-1. Navigate to the frontend directory: `cd frontend`
-2. Remove node_modules: `rm -rf node_modules`
-3. Reinstall dependencies: `npm install`
-4. Try starting again: `npm run dev`
+2. Verify import statements are compatible with both relative and absolute imports
+
+### Template Errors
+
+If you see errors related to templates or static files:
+
+1. Run the fix_templates.py script:
+   ```bash
+   python3 scripts/fix_templates.py
+   ```
+
+2. This will create the necessary templates and static files for the Flask application
 
 ## Additional Resources
 
 - [API Documentation](API.md) - Details on available API endpoints
-- [INSTALLATION.md](../INSTALLATION.md) - Complete installation instructions
 - [README.md](../README.md) - Project overview and features 

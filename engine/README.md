@@ -1,6 +1,41 @@
 # VXDF Engine (Legacy Documentation)
 
-> **IMPORTANT**: The functionality described in this document has been refactored and moved to the `api/` directory in the project root. This document is kept for historical reference. Please refer to the main project README.md for current structure.
+> **IMPORTANT**: The functionality described in this document has been refactored and moved to the `api/` directory in the project root. This file is kept for historical reference only. Please refer to the main project README.md for current structure and operation instructions.
+
+The VXDF Engine was the original implementation of the Validated Exploitable Data Flow validation framework. The application has since been restructured with:
+
+- Backend functionality moved to `api/` directory
+- Core validation logic maintained in `api/core/`
+- Models moved to `api/models/`
+- Parsers moved to `api/parsers/`
+- Templates and static files moved to `engine/templates` and `engine/static`
+
+## Current Architecture
+
+The current architecture uses:
+
+```
+vxdf/
+├── api/                # API server and core functionality
+│   ├── core/           # Core validation logic
+│   ├── models/         # Data models
+│   ├── parsers/        # Input format parsers
+│   └── validators/     # Vulnerability validators
+├── engine/             # Templates, static files, and legacy code
+├── frontend/           # React/TypeScript frontend
+└── scripts/            # Utility scripts for setup and path handling
+```
+
+For the current documentation, please refer to:
+- Main [README.md](../README.md) in the project root
+- [STARTUP.md](../docs/STARTUP.md) for instructions on running the application
+- [API.md](../docs/API.md) for API endpoint documentation
+
+DO NOT use the information below for the current application structure!
+
+----
+
+# Historical Documentation (For Reference Only)
 
 The VXDF (Validated Exploitable Data Flow) Engine is a comprehensive security validation framework designed to process security scanning outputs (SAST, DAST, SCA), validate the actual exploitability of reported vulnerabilities, and produce standardized output with detailed evidence.
 

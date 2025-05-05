@@ -5,45 +5,53 @@ This guide provides step-by-step instructions for setting up the VXDF Validate a
 ## Prerequisites
 
 - Python 3.9 or newer
-- Node.js 18 or newer
-- npm 9 or newer
+- Node.js 16 or newer 
+- npm 8 or newer
 - Git
 
 ## Quick Installation
 
-For a quick start, use our setup script:
+For a quick start:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vxdf.git
+git clone https://github.com/your-username/vxdf.git
 cd vxdf
 
-# Run the setup script
-./scripts/setup.sh
+# Install Python dependencies
+pip install -r api/requirements.txt
 
-# Start the application
-./scripts/start.sh
+# Install frontend dependencies
+cd frontend
+npm install
+cd ..
+
+# Run the application
+./scripts/startup.sh
 ```
 
 ## Manual Installation
 
-If you prefer to install manually, follow these steps:
+If you prefer a more detailed installation process:
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/vxdf.git
+git clone https://github.com/your-username/vxdf.git
 cd vxdf
 ```
 
 ### 2. Backend Setup
 
 ```bash
-# Install the Python package in development mode
-pip install -e .
+# Install Python dependencies
+pip install -r api/requirements.txt
 
-# Test the installation
-python -c "import api; print(api.__version__)"
+# Verify the installation
+cd api
+python -c "from pathlib import Path; print('Path module available')"
+python -c "import api; print(f'API version: {api.__version__}')"
+cd ..
 ```
 
 ### 3. Frontend Setup
@@ -54,86 +62,101 @@ cd frontend
 
 # Install dependencies
 npm install
+
+# Return to project root
+cd ..
 ```
 
-### 4. Running the Application
+### 4. Set Up Templates and Static Files
+
+Run the template fixing script to ensure all necessary files and directories are created:
 
 ```bash
-# In one terminal, start the API server
-cd api
-python main.py
+python3 scripts/fix_templates.py
+```
 
-# In another terminal, start the frontend
-cd frontend
-npm run dev
+### 5. Running the Application
+
+You can run the application using the startup script:
+
+```bash
+./scripts/startup.sh
+```
+
+Or specify custom ports:
+
+```bash
+./scripts/startup.sh 8000 3000  # API on port 8000, frontend on port 3000
 ```
 
 The application will be available at:
-- Frontend: http://localhost:5173
-- API: http://localhost:5001
+- Frontend: http://localhost:5173 (or your custom port)
+- API: http://localhost:5001 (or your custom port)
 
-## Configuration
+## Directory Structure
 
-### Backend Configuration
-
-The backend configuration is stored in `api/config.py`. You can modify the following settings:
-
-- `DATABASE_URI`: Database connection string
-- `SECRET_KEY`: Secret key for security
-- `DEBUG`: Enable/disable debug mode
-- `PORT`: API server port
-
-### Frontend Configuration
-
-The frontend configuration is stored in environment variables. Create a `.env` file in the frontend directory:
+After installation, your project structure should look like this:
 
 ```
-VITE_API_URL=http://localhost:5001
+vxdf/
+├── api/                # API server and core functionality
+├── engine/             # Templates, static files, and engine code
+├── frontend/           # React/TypeScript frontend
+├── scripts/            # Utility scripts
+├── docs/               # Documentation
+├── templates -> engine/templates  # Symlink
+└── static -> engine/static        # Symlink
 ```
+
+## Environment Variables
+
+Customize the application behavior with environment variables:
+
+- `PORT`: API server port (default: 5001)
+- `VITE_API_PORT`: Port for the API server, used by frontend (default: 5001)
+- `VITE_PORT`: Port for the frontend server (default: 5173)
+- `PYTHONPATH`: Should include the project root directory
+- `DEBUG_PATHS`: Set to "1" to print debug information about paths
 
 ## Troubleshooting
 
-### Port Already in Use
+### Import Errors
 
-If you see an error like "Address already in use" or "Port 5001 is in use by another program":
-
+If you encounter import errors:
 ```bash
-# Find the process using the port
-lsof -i :5001
-
-# Kill the process
-kill -9 <PID>
+# Set PYTHONPATH to include the project root
+export PYTHONPATH=/path/to/vxdf:$PYTHONPATH
 ```
 
-### Backend Dependency Issues
+### Path-related Errors
 
-If you encounter dependency issues with the backend:
-
+If you encounter path-related errors:
 ```bash
-# Update pip
-pip install --upgrade pip
-
-# Install dependencies explicitly
-pip install flask flask-cors flask-sqlalchemy pydantic
+# Run the path fixing scripts
+python3 scripts/fix_paths.py
+python3 scripts/fix_templates.py
 ```
 
-### Frontend Dependency Issues
+### Port Conflicts
 
-If you encounter dependency issues with the frontend:
-
+If the default ports are in use:
 ```bash
-# Clear npm cache
-npm cache clean --force
+# Use custom ports
+./scripts/startup.sh 5002 5174
+```
 
-# Reinstall dependencies
-rm -rf node_modules
-npm install
+### Database Issues
+
+If database errors occur:
+```bash
+# Reset the database
+rm vxdf_validate.db
+touch vxdf_validate.db
 ```
 
 ## Next Steps
 
-After installation, you may want to:
-
-1. Check out the [API documentation](docs/API.md)
-2. Upload a test scan file to validate
-3. Explore the dashboard 
+After installation:
+1. Upload a security scan file to see the application in action
+2. Check out the [API documentation](docs/API.md) for integration options
+3. View the [STARTUP.md](docs/STARTUP.md) for more details on running the application 

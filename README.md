@@ -13,17 +13,34 @@ The VXDF Validate tool helps security professionals validate security findings f
 
 ## Project Structure
 
-The application has been restructured to use a clean organization:
+The application uses a clean architecture with clear separation of concerns:
 
 ```
 vxdf/
-├── api/                # API server and core functionality
-├── engine/             # Core validation engine
+├── api/                # Backend API and core functionality
+│   ├── core/           # Core validation engine
+│   ├── models/         # Data models
+│   ├── parsers/        # Input format parsers
+│   └── validators/     # Vulnerability validators
+├── engine/             # Template and static files
+│   ├── templates/      # Flask HTML templates
+│   └── static/         # CSS, JS, and other static assets
 ├── frontend/           # React/TypeScript frontend
 ├── scripts/            # Utility scripts
+│   ├── fix_paths.py    # Script to fix path references
+│   ├── fix_templates.py # Script to set up templates
+│   └── startup.sh      # Main startup script
 ├── docs/               # Documentation
-└── templates, static/  # Symlinks for Flask template handling
+├── templates → engine/templates  # Symlink
+└── static → engine/static        # Symlink
 ```
+
+## Key Features
+
+- **Consistent Path Handling**: Uses pathlib.Path for reliable path resolution
+- **Flexible Deployment**: Works in development and production environments
+- **Modular Design**: Clean separation between components
+- **Backward Compatibility**: Support for legacy module structure
 
 ## Installation
 
@@ -55,8 +72,6 @@ cd ..
 
 ## Running the Application
 
-The application can be started in two ways:
-
 ### Using the startup script (recommended)
 
 The easiest way to run the application is with the startup script:
@@ -81,7 +96,7 @@ You can customize the ports:
 
 If you prefer to run the components separately:
 
-1. Run the template fixing script to ensure the template directories are set up:
+1. Run the template fixing script first:
 ```bash
 python3 scripts/fix_templates.py
 ```
@@ -98,24 +113,28 @@ cd frontend
 npm run dev
 ```
 
-## Path Handling
+## Path Handling Solution
 
-This project uses a consistent approach to path handling:
+This project uses a robust approach to path handling that solves common issues:
 
-- All paths are managed using the `pathlib.Path` library
-- The project root is defined as the directory containing the api/, engine/, frontend/ directories
-- Templates and static files are located in engine/templates and engine/static
-- Symlinks to these directories are created at the project root for Flask to access them
+- Uses `pathlib.Path` consistently throughout the codebase
+- Centralizes path definitions in `api/config.py`
+- Creates symlinks for Flask template and static directories
+- Provides automated scripts to fix path references and create templates
+- Sets PYTHONPATH to include the project root during startup
+- Handles both absolute and relative imports with fallbacks
 
-If you encounter any path-related issues, run:
+If you encounter any path-related issues, simply run:
 ```bash
-python3 scripts/fix_paths.py
-python3 scripts/fix_templates.py
+python3 scripts/fix_paths.py   # Fix path references in code
+python3 scripts/fix_templates.py  # Create template symlinks
 ```
 
-## Contributing
+## Documentation
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- [Installation Guide](INSTALLATION.md) - Detailed installation instructions
+- [Startup Guide](docs/STARTUP.md) - How to run the application
+- [API Documentation](docs/API.md) - API endpoints reference
 
 ## License
 

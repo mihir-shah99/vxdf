@@ -10,7 +10,11 @@ All API endpoints are relative to the base URL:
 http://localhost:5001/api
 ```
 
-For production deployments, replace with your actual domain.
+For production deployments, replace with your actual domain and port. You can customize the port when running the application:
+
+```bash
+./scripts/startup.sh <api_port> <frontend_port>
+```
 
 ## Authentication
 
@@ -18,9 +22,59 @@ Authentication is not currently implemented. Future versions will support authen
 
 ## Endpoints
 
-### File Upload
+### Get Statistics
 
-Upload and process security scan files.
+Get statistics about findings in the database.
+
+**URL**: `/stats`
+
+**Method**: `GET`
+
+**Response**:
+
+```json
+{
+  "total_findings": 25,
+  "validated_findings": 20,
+  "exploitable_findings": 12,
+  "by_type": {
+    "sql_injection": 7,
+    "xss": 10,
+    "path_traversal": 5,
+    "command_injection": 3
+  },
+  "by_severity": {
+    "CRITICAL": 3,
+    "HIGH": 8,
+    "MEDIUM": 10,
+    "LOW": 4,
+    "INFORMATIONAL": 0
+  }
+}
+```
+
+### Get Supported Vulnerability Types
+
+Get a list of supported vulnerability types.
+
+**URL**: `/supported-types`
+
+**Method**: `GET`
+
+**Response**:
+
+```json
+[
+  "sql_injection",
+  "xss",
+  "path_traversal",
+  "command_injection"
+]
+```
+
+### Upload File
+
+Upload and process security scan files (SARIF, JSON, etc.).
 
 **URL**: `/upload`
 
@@ -32,8 +86,8 @@ Upload and process security scan files.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| file | File | Yes | The scan file to upload (SARIF, CycloneDX, DAST) |
-| parser_type | String | No | Type of parser to use (sarif, cyclonedx, dast). Default: sarif |
+| file | File | Yes | The scan file to upload |
+| parser_type | String | No | Type of parser to use (sarif, json, csv). Default: sarif |
 | validate | Boolean | No | Whether to validate findings. Default: true |
 | target_name | String | No | Name of the target application |
 | target_version | String | No | Version of the target application |
@@ -65,55 +119,27 @@ Upload and process security scan files.
       "exploitable": true,
       "validated": true,
       "validationDate": "2025-05-04T15:30:00Z",
-      "validationMessage": "Confirmed SQL Injection vulnerability."
-    },
-    // Additional findings...
+      "validationMessage": "Confirmed SQL Injection vulnerability.",
+      "evidence": [
+        {
+          "description": "SQL Injection test",
+          "method": "http_request",
+          "timestamp": "2025-05-04T15:30:00Z",
+          "content": "HTTP request content here"
+        }
+      ],
+      "createdAt": "2025-05-04T15:29:30Z"
+    }
   ],
   "outputFile": "vxdf_results_20250504-153000.json"
 }
 ```
 
-### Get Statistics
+### List Vulnerabilities
 
-Get validation statistics for the dashboard.
+Get a list of vulnerabilities with optional filtering.
 
-**URL**: `/stats`
-
-**Method**: `GET`
-
-**Response**:
-
-```json
-{
-  "total": 25,
-  "validated": 20,
-  "exploitable": 12,
-  "nonExploitable": 8,
-  "inProgress": 5,
-  "bySeverity": {
-    "critical": 3,
-    "high": 8,
-    "medium": 10,
-    "low": 4,
-    "informational": 0
-  },
-  "byType": {
-    "sql_injection": 7,
-    "xss": 10,
-    "path_traversal": 5,
-    "command_injection": 3
-  },
-  "recentFindings": [
-    // Recent findings list
-  ]
-}
-```
-
-### List Findings
-
-Get a list of findings with optional filtering.
-
-**URL**: `/findings`
+**URL**: `/vulnerabilities`
 
 **Method**: `GET`
 
@@ -123,24 +149,37 @@ Get a list of findings with optional filtering.
 |------|------|----------|-------------|
 | limit | Integer | No | Maximum number of results to return. Default: 10 |
 | offset | Integer | No | Number of results to skip. Default: 0 |
-| vuln_type | String | No | Filter by vulnerability type |
-| exploitable | Boolean | No | Filter by exploitable status |
+| category | String | No | Filter by vulnerability type |
+| exploitable | Boolean | No | Filter by exploitable status (true/false) |
+| severity | String | No | Filter by severity level |
 
 **Response**:
 
 ```json
 {
-  "findings": [
+  "vulnerabilities": [
     {
       "id": "a549f9d9-c4cd-4b7d-9a10-5ea2c6893612",
-      "name": "SQL Injection in login form",
-      "vulnerability_type": "sql_injection",
+      "title": "SQL Injection in login form",
+      "description": "SQL injection vulnerability in login form",
       "severity": "HIGH",
-      "is_validated": true,
-      "is_exploitable": true,
-      "created_at": "2025-05-04T15:30:00Z"
-    },
-    // Additional findings...
+      "category": "sql_injection",
+      "cwe": "CWE-89",
+      "source": {
+        "file": "src/login.php",
+        "line": 42
+      },
+      "sink": {
+        "file": "src/db.php",
+        "line": 15
+      },
+      "exploitable": true,
+      "validated": true,
+      "validationDate": "2025-05-04T15:30:00Z",
+      "validationMessage": "Confirmed SQL Injection vulnerability.",
+      "evidence": [],
+      "createdAt": "2025-05-04T15:29:30Z"
+    }
   ],
   "total": 25,
   "limit": 10,
@@ -148,11 +187,11 @@ Get a list of findings with optional filtering.
 }
 ```
 
-### Get Finding Details
+### Get Vulnerability Details
 
-Get detailed information about a specific finding.
+Get detailed information about a specific vulnerability.
 
-**URL**: `/finding/{finding_id}`
+**URL**: `/vulnerabilities/{vulnerability_id}`
 
 **Method**: `GET`
 
@@ -161,38 +200,68 @@ Get detailed information about a specific finding.
 ```json
 {
   "id": "a549f9d9-c4cd-4b7d-9a10-5ea2c6893612",
-  "source_id": "CWE-89-1",
-  "source_type": "SARIF",
-  "vulnerability_type": "sql_injection",
-  "name": "SQL Injection in login form",
+  "title": "SQL Injection in login form",
   "description": "SQL injection vulnerability in login form",
   "severity": "HIGH",
-  "cvss_score": 8.5,
-  "cwe_id": "CWE-89",
-  "file_path": "src/login.php",
-  "line_number": 42,
-  "column": 15,
-  "is_validated": true,
-  "is_exploitable": true,
-  "validation_date": "2025-05-04T15:30:00Z",
-  "validation_message": "Confirmed SQL Injection vulnerability.",
-  "validation_attempts": 1,
-  "created_at": "2025-05-04T15:29:30Z",
-  "updated_at": "2025-05-04T15:30:00Z",
+  "category": "sql_injection",
+  "cwe": "CWE-89",
+  "source": {
+    "file": "src/login.php",
+    "line": 42,
+    "snippet": "string query = \"SELECT * FROM users WHERE username='\" + username + \"'\";"
+  },
+  "sink": {
+    "file": "src/db.php",
+    "line": 15,
+    "snippet": "db.execute(query);"
+  },
+  "steps": [
+    {
+      "file": "src/auth.php",
+      "line": 28,
+      "snippet": "processLogin(username, password);",
+      "note": "Data passes through authentication module"
+    }
+  ],
+  "exploitable": true,
+  "validated": true,
+  "validationDate": "2025-05-04T15:30:00Z",
+  "validationMessage": "Confirmed SQL Injection vulnerability.",
   "evidence": [
     {
-      "id": "b549f9d9-c4cd-4b7d-9a10-5ea2c6893613",
-      "evidence_type": "sql_injection_test",
       "description": "SQL Injection test with payload: ' OR '1'='1",
-      "content": "{\"query\":\"SELECT * FROM users WHERE username = '' OR '1'='1'\", \"result\":\"success\", \"rows_returned\":2}",
-      "created_at": "2025-05-04T15:29:45Z"
+      "method": "sql_injection_test",
+      "timestamp": "2025-05-04T15:29:45Z",
+      "content": "{\"query\":\"SELECT * FROM users WHERE username = '' OR '1'='1'\", \"result\":\"success\", \"rows_returned\":2}"
     }
-  ]
+  ],
+  "createdAt": "2025-05-04T15:29:30Z"
 }
 ```
 
-### Get Supported Types
+## Error Handling
 
-Get supported vulnerability types.
+All API endpoints return appropriate HTTP status codes and error messages:
 
-**URL**: `/supported-types`
+* `200 OK`: Request was successful
+* `400 Bad Request`: Invalid parameters
+* `404 Not Found`: Resource not found
+* `500 Internal Server Error`: Server-side error
+
+Error responses include a JSON object with an `error` field containing the error message.
+
+Example:
+
+```json
+{
+  "error": "No file part in the request"
+}
+```
+
+## CORS Support
+
+The API supports Cross-Origin Resource Sharing (CORS) for specified origins:
+- http://localhost:5173
+- http://localhost:3000
+
+For production, you should modify the CORS configuration in `api/api.py` to allow requests from your frontend domain.
