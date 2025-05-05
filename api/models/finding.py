@@ -5,13 +5,19 @@ import uuid
 import datetime
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Text, ForeignKey, JSON, Enum
 from sqlalchemy.orm import relationship
-from api.models.database import Base
+
+# Try different import paths for Base
+try:
+    from models.database import Base
+except ImportError:
+    from api.models.database import Base
 
 class Finding(Base):
     """
     Model representing a security finding from a scanner.
     """
     __tablename__ = "findings"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     source_id = Column(String(255), nullable=True, index=True)  # Original ID from scanner
@@ -43,14 +49,15 @@ class Finding(Base):
     # VXDF output data
     vxdf_data = Column(JSON, nullable=True)
     
-    # Relationships
-    evidence = relationship("Evidence", back_populates="finding", cascade="all, delete-orphan")
+    # Relationships - Use fully qualified class name to avoid resolution issues
+    evidence = relationship("api.models.finding.Evidence", back_populates="finding", cascade="all, delete-orphan")
 
 class Evidence(Base):
     """
     Model representing evidence for a security finding's exploitability.
     """
     __tablename__ = "evidence"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     finding_id = Column(String(36), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False)
@@ -59,5 +66,5 @@ class Evidence(Base):
     content = Column(Text, nullable=False)  # The actual evidence data
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
-    # Relationship back to finding
-    finding = relationship("Finding", back_populates="evidence")
+    # Relationship back to finding - Use fully qualified class name
+    finding = relationship("api.models.finding.Finding", back_populates="evidence")

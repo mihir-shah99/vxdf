@@ -12,16 +12,68 @@ from typing import List, Dict, Any, Optional
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 from werkzeug.utils import secure_filename
 
-from api import __version__
-from api.models.database import init_db, SessionLocal
-from api.models.finding import Finding
-from api.parsers import ParserType, get_parser
-from api.core.engine import ValidationEngine
-from api.config import OUTPUT_DIR, SUPPORTED_VULN_TYPES
+# Import version
+try:
+    # When imported as a module from outside
+    from api import __version__
+except ImportError:
+    # When imported directly within api directory
+    try:
+        from __init__ import __version__
+    except ImportError:
+        __version__ = "1.0.0"
+
+# Import models and parsers with relative imports when possible
+try:
+    # Try relative imports first (when run within api directory)
+    from models.database import init_db, SessionLocal
+    from models.finding import Finding
+    from parsers import ParserType, get_parser
+    from core.engine import ValidationEngine
+    from api import api_bp  # Import the API blueprint
+except ImportError:
+    # Fall back to absolute imports (when imported as a module)
+    from api.models.database import init_db, SessionLocal
+    from api.models.finding import Finding
+    from api.parsers import ParserType, get_parser
+    from api.core.engine import ValidationEngine
+    from api.api import api_bp  # Import the API blueprint
+
+# Import config with fallback
+try:
+    from config import (
+        TEMPLATE_DIR, STATIC_DIR, OUTPUT_DIR, SUPPORTED_VULN_TYPES,
+        LOG_DIR, TEMP_DIR, DB_PATH, PROJECT_ROOT
+    )
+except ImportError:
+    try:
+        from api.config import (
+            TEMPLATE_DIR, STATIC_DIR, OUTPUT_DIR, SUPPORTED_VULN_TYPES,
+            LOG_DIR, TEMP_DIR, DB_PATH, PROJECT_ROOT
+        )
+    except ImportError:
+        # Default fallbacks if config can't be imported
+        from pathlib import Path
+        API_DIR = Path(__file__).resolve().parent
+        PROJECT_ROOT = API_DIR.parent
+        TEMPLATE_DIR = PROJECT_ROOT / "templates"
+        STATIC_DIR = PROJECT_ROOT / "static"
+        OUTPUT_DIR = PROJECT_ROOT / "output"
+        LOG_DIR = PROJECT_ROOT / "logs"
+        TEMP_DIR = PROJECT_ROOT / "temp"
+        DB_PATH = PROJECT_ROOT / "vxdf_validate.db"
+        SUPPORTED_VULN_TYPES = []
 
 # Initialize Flask app
-app = Flask(__name__, template_folder='../templates', static_folder='../static')
+app = Flask(
+    __name__,
+    template_folder=str(TEMPLATE_DIR),
+    static_folder=str(STATIC_DIR)
+)
 app.secret_key = os.environ.get("SESSION_SECRET", os.urandom(24))
+
+# Register the API blueprint
+app.register_blueprint(api_bp)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -115,7 +167,7 @@ def upload_file():
         # Save VXDF to output directory
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         output_filename = f"vxdf_results_{timestamp}.json"
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        output_path = OUTPUT_DIR / output_filename
         
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(vxdf_doc.to_json(pretty=True))
@@ -130,7 +182,7 @@ def upload_file():
     
     finally:
         # Clean up temp file
-        if os.path.exists(temp_path):
+        if Path(temp_path).exists():
             os.unlink(temp_path)
 
 @app.route('/results')
@@ -146,9 +198,9 @@ def results():
     
     # Ensure filename is secure
     filename = secure_filename(filename)
-    filepath = os.path.join(OUTPUT_DIR, filename)
+    filepath = OUTPUT_DIR / filename
     
-    if not os.path.exists(filepath):
+    if not filepath.exists():
         flash('Results file not found', 'danger')
         return redirect(url_for('index'))
     
@@ -178,9 +230,9 @@ def download_results(filename):
     """
     # Ensure filename is secure
     filename = secure_filename(filename)
-    filepath = os.path.join(OUTPUT_DIR, filename)
+    filepath = OUTPUT_DIR / filename
     
-    if not os.path.exists(filepath):
+    if not filepath.exists():
         flash('Results file not found', 'danger')
         return redirect(url_for('index'))
     

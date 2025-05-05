@@ -8,7 +8,6 @@ from typing import List, Dict, Optional, Any, Union
 from enum import Enum
 from pydantic import BaseModel, Field, validator
 
-
 class SeverityLevel(str, Enum):
     """Severity levels for vulnerabilities."""
     CRITICAL = "CRITICAL"
@@ -17,14 +16,12 @@ class SeverityLevel(str, Enum):
     LOW = "LOW"
     INFORMATIONAL = "INFORMATIONAL"
 
-
 class CodeLocation(BaseModel):
     """Represents a location in code."""
     file_path: str = Field(..., description="Path to the file")
     line_number: Optional[int] = Field(None, description="Line number")
     column: Optional[int] = Field(None, description="Column number")
     code_snippet: Optional[str] = Field(None, description="Code snippet")
-
 
 class DataFlowStep(BaseModel):
     """Represents a step in a data flow."""
@@ -33,7 +30,6 @@ class DataFlowStep(BaseModel):
     location: CodeLocation = Field(..., description="Location in code")
     step_type: str = Field(default="intermediate", description="Type of step (source, sink, intermediate)")
     value: Optional[str] = Field(None, description="Value at this point in the flow")
-
 
 class EvidenceItem(BaseModel):
     """Represents a piece of evidence supporting exploitability."""
@@ -45,7 +41,6 @@ class EvidenceItem(BaseModel):
     reproduction_steps: Optional[str] = Field(None, description="Steps to reproduce this evidence")
     related_step_id: Optional[str] = Field(None, description="ID of the data flow step this evidence relates to")
     requires_manual_verification: bool = Field(default=False, description="Whether this evidence requires manual verification")
-
 
 class VXDFFlow(BaseModel):
     """Represents a single validated exploitable data flow."""
@@ -69,7 +64,6 @@ class VXDFFlow(BaseModel):
     # Optional vendor-specific fields
     x_extensions: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Vendor-specific extensions")
 
-
 class VXDFMetadata(BaseModel):
     """Metadata for a VXDF document."""
     version: str = Field("1.0", description="VXDF schema version")
@@ -80,7 +74,6 @@ class VXDFMetadata(BaseModel):
     target_version: Optional[str] = Field(None, description="Version of the target application")
     target_context: Optional[str] = Field(None, description="Context or environment of the target")
 
-
 class VXDFSummary(BaseModel):
     """Summary statistics for a VXDF document."""
     total_flows: int = Field(0, description="Total number of flows in the document")
@@ -88,7 +81,6 @@ class VXDFSummary(BaseModel):
     non_exploitable_flows: int = Field(0, description="Number of confirmed non-exploitable flows")
     by_severity: Dict[str, int] = Field(default_factory=dict, description="Count of flows by severity")
     by_vulnerability_type: Dict[str, int] = Field(default_factory=dict, description="Count of flows by vulnerability type")
-
 
 class VXDFDocument(BaseModel):
     """Top-level VXDF document."""

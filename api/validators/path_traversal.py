@@ -2,6 +2,7 @@
 Validator for Path Traversal vulnerabilities.
 """
 import logging
+from pathlib import Path
 import json
 import uuid
 import re
@@ -437,7 +438,7 @@ def vulnerable():
     file_name = request.args.get('file', '')
     
     # Construct file path (vulnerable way)
-    file_path = os.path.join(FILES_DIR, file_name)
+    file_path = Path(FILES_DIR) / file_name
     
     try:
         return send_file(file_path)
@@ -450,7 +451,7 @@ def vulnerable_post():
     file_name = request.form.get('file', '')
     
     # Construct file path (vulnerable way)
-    file_path = os.path.join(FILES_DIR, file_name)
+    file_path = Path(FILES_DIR) / file_name
     
     try:
         return send_file(file_path)
@@ -472,7 +473,7 @@ def safe():
         abort(403)  # Forbidden
     
     # Construct file path safely
-    file_path = os.path.join(FILES_DIR, file_name)
+    file_path = Path(FILES_DIR) / file_name
     
     try:
         return send_file(file_path)

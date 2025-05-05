@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sys
 import logging
 from api.server import app
@@ -6,7 +7,7 @@ from api.api import api_bp
 from api.utils.logger import setup_logging
 
 # Add the parent directory to sys.path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, Path(Path(os.path.abspath(__file__).parent.parent)))
 
 # Set up logging
 setup_logging()

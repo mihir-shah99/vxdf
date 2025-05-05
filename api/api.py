@@ -5,6 +5,7 @@ This module provides RESTful API endpoints specifically designed for the React f
 It serves as an integration layer between the frontend and the core VXDF validation engine.
 """
 import os
+from pathlib import Path
 import logging
 import tempfile
 import datetime
@@ -154,7 +155,7 @@ def upload_file():
         # Save VXDF to output directory
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         output_filename = f"vxdf_results_{timestamp}.json"
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        output_path = Path(OUTPUT_DIR) / output_filename
         
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(vxdf_doc.to_json(pretty=True))
@@ -177,7 +178,7 @@ def upload_file():
     
     finally:
         # Clean up temp file
-        if os.path.exists(temp_path):
+        if Path(temp_path).exists():
             os.unlink(temp_path)
 
 @api_bp.route('/vulnerabilities', methods=['GET'])
@@ -262,50 +263,53 @@ def get_vulnerability(vulnerability_id):
 @api_bp.route('/stats', methods=['GET'])
 def get_stats():
     """
-    Get validation statistics for the dashboard.
+    Get statistics about findings in the database.
     """
+    db = SessionLocal()
     try:
-        db = SessionLocal()
+        # Default stats in case we can't query the database
+        stats = {
+            'total_findings': 0,
+            'validated_findings': 0,
+            'exploitable_findings': 0,
+            'by_type': {},
+            'by_severity': {'CRITICAL': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0, 'INFORMATIONAL': 0}
+        }
         
-        total_findings = db.query(Finding).count()
-        validated_findings = db.query(Finding).filter(Finding.is_validated == True).count()
-        exploitable_findings = db.query(Finding).filter(Finding.is_exploitable == True).count()
-        non_exploitable_findings = db.query(Finding).filter(Finding.is_exploitable == False).count()
-        in_progress = total_findings - validated_findings
+        try:
+            # Get basic stats
+            total_findings = db.query(Finding.id).count()
+            validated_findings = db.query(Finding.id).filter(Finding.is_validated == True).count()
+            exploitable_findings = db.query(Finding.id).filter(Finding.is_exploitable == True).count()
+            
+            # Update stats dictionary
+            stats['total_findings'] = total_findings
+            stats['validated_findings'] = validated_findings
+            stats['exploitable_findings'] = exploitable_findings
+            
+            # Get findings by type
+            for vuln_type in SUPPORTED_VULN_TYPES:
+                count = db.query(Finding.id).filter(Finding.vulnerability_type == vuln_type).count()
+                stats['by_type'][vuln_type] = count
+            
+            # Get findings by severity
+            for severity in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL']:
+                count = db.query(Finding.id).filter(Finding.severity == severity).count()
+                stats['by_severity'][severity] = count
+        except Exception as e:
+            # Log the error but continue with default stats
+            logger.error(f"Database query error in stats API: {e}")
         
-        # Get stats by severity
-        severity_stats = {}
-        for severity in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL']:
-            count = db.query(Finding).filter(Finding.severity == severity).count()
-            severity_stats[severity.lower()] = count
-        
-        # Get stats by vulnerability type
-        type_stats = {}
-        vuln_types = db.query(Finding.vulnerability_type, func.count(Finding.id)).\
-            group_by(Finding.vulnerability_type).all()
-        
-        for vuln_type, count in vuln_types:
-            type_stats[vuln_type] = count
-        
-        # Get recent findings
-        recent_findings = []
-        for finding in db.query(Finding).order_by(Finding.created_at.desc()).limit(5).all():
-            recent_findings.append(transform_finding_to_vulnerability(finding))
-        
-        return jsonify({
-            'total': total_findings,
-            'validated': validated_findings,
-            'exploitable': exploitable_findings,
-            'nonExploitable': non_exploitable_findings,
-            'inProgress': in_progress,
-            'bySeverity': severity_stats,
-            'byType': type_stats,
-            'recentFindings': recent_findings
-        })
+        return jsonify(stats)
     
     except Exception as e:
-        logger.error(f"Error in API: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error in stats API: {e}", exc_info=True)
+        return jsonify({
+            'error': str(e),
+            'total_findings': 0,
+            'validated_findings': 0,
+            'exploitable_findings': 0
+        }), 500
     
     finally:
         db.close()
@@ -313,8 +317,6 @@ def get_stats():
 @api_bp.route('/supported-types', methods=['GET'])
 def get_supported_types():
     """
-    Get supported vulnerability types.
+    Get list of supported vulnerability types.
     """
-    return jsonify({
-        'vulnerabilityTypes': SUPPORTED_VULN_TYPES
-    }) 
+    return jsonify(SUPPORTED_VULN_TYPES) 

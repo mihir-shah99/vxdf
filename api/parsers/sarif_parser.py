@@ -4,14 +4,14 @@ Parser for SARIF (Static Analysis Results Interchange Format) files.
 import json
 import logging
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
 
 # Remove the sarif_om import as we'll parse the JSON directly
 # from sarif_om import SarifLog  # type: ignore
 
 from api.models.finding import Finding
-from api.config import CWE_TO_VULN_TYPE, SEVERITY_THRESHOLDS
+from api.config import CWE_TO_VULN_TYPE, SEVERITY_THRESHOLDS, PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +20,16 @@ class SarifParser:
     Parser for SARIF (Static Analysis Results Interchange Format) files.
     """
     
-    def __init__(self, base_path: Optional[str] = None):
+    def __init__(self, base_path: Optional[Union[str, Path]] = None):
         """
         Initialize the SARIF parser.
         
         Args:
             base_path: Base path for resolving relative file paths in SARIF
         """
-        self.base_path = base_path
+        self.base_path = Path(base_path) if base_path else PROJECT_ROOT
     
-    def parse_file(self, file_path: str) -> List[Finding]:
+    def parse_file(self, file_path: Union[str, Path]) -> List[Finding]:
         """
         Parse a SARIF file and extract security findings.
         
@@ -39,6 +39,7 @@ class SarifParser:
         Returns:
             List of Finding objects
         """
+        file_path = Path(file_path)
         logger.info(f"Parsing SARIF file: {file_path}")
         
         try:
@@ -227,32 +228,39 @@ class SarifParser:
             return None
         
         location = locations[0]
-        physical_location = location.get('physicalLocation')
-        if not physical_location:
+        
+        # Get physical location (file, line, column)
+        phys_loc = location.get('physicalLocation')
+        if not phys_loc:
             return None
         
-        artifact_location = physical_location.get('artifactLocation')
-        if not artifact_location or not artifact_location.get('uri'):
+        # Get artifact location (file path)
+        artifact_location = phys_loc.get('artifactLocation')
+        if not artifact_location:
             return None
         
+        # Get file path
         file_path = artifact_location.get('uri')
         
         # Handle relative paths if base path is provided
-        if self.base_path and not os.path.isabs(file_path) and not file_path.startswith('file://'):
-            file_path = os.path.join(self.base_path, file_path)
+        if file_path:
+            if not Path(file_path).is_absolute() and not file_path.startswith('file://'):
+                file_path = str(self.base_path / file_path)
+            
+            # Remove file:// prefix if present
+            if file_path.startswith('file://'):
+                file_path = file_path[7:]
         
         # Extract line and column
-        line_number = None
-        column = None
-        if 'region' in physical_location:
-            region = physical_location.get('region', {})
-            line_number = region.get('startLine')
-            column = region.get('startColumn')
+        region = phys_loc.get('region', {})
+        line_number = region.get('startLine')
+        column = region.get('startColumn')
         
+        # Return location info
         return {
             'file_path': file_path,
             'line_number': line_number,
-            'column': column
+            'column': column,
         }
             
     def _extract_severity(self, result: Dict[str, Any], rule: Dict[str, Any]) -> tuple[str, Optional[float]]:

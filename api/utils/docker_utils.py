@@ -2,6 +2,7 @@
 Utilities for working with Docker containers for isolated validation.
 """
 import os
+from pathlib import Path
 import logging
 import tempfile
 import subprocess
@@ -180,8 +181,8 @@ class DockerEnvironment:
         
         try:
             # First copy to the shared temp directory
-            shared_filename = os.path.basename(src_path)
-            shared_path = os.path.join(self.temp_dir, shared_filename)
+            shared_filename = Path(src_path).name
+            shared_path = Path(self.temp_dir) / shared_filename
             shutil.copy2(src_path, shared_path)
             
             # Then move from the shared directory to the destination in the container
@@ -215,7 +216,7 @@ class DockerEnvironment:
         
         try:
             # First copy to the shared directory in the container
-            shared_filename = os.path.basename(src_path)
+            shared_filename = Path(src_path).name
             cmd = f"cp {src_path} /tmp/shared/{shared_filename}"
             exit_code, stdout, stderr = self.execute_command(cmd)
             
@@ -224,7 +225,7 @@ class DockerEnvironment:
                 return False
             
             # Then copy from the shared directory to the destination
-            shared_path = os.path.join(self.temp_dir, shared_filename)
+            shared_path = Path(self.temp_dir) / shared_filename
             try:
                 shutil.copy2(shared_path, dest_path)
                 return True
@@ -321,7 +322,7 @@ class DockerEnvironment:
                 self.container_id = None
             
             # Clean up temp directory
-            if self.temp_dir and os.path.exists(self.temp_dir):
+            if self.temp_dir and Path(self.temp_dir).exists():
                 logger.info(f"Removing temporary directory: {self.temp_dir}")
                 shutil.rmtree(self.temp_dir, ignore_errors=True)
                 self.temp_dir = None
