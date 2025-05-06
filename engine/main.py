@@ -3,13 +3,14 @@ from pathlib import Path
 import sys
 import logging
 import argparse
-from api.server import app
-from api.api import api_bp
-from api.utils.logger import setup_logging
 
 # Add the parent directory to sys.path
 project_root = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, project_root)
+
+from api.server import app
+from api.api import api_bp
+from api.utils.logger import setup_logging
 
 # Set up logging
 setup_logging()
