@@ -12,7 +12,7 @@ from datetime import datetime
 
 
 # Configuration
-API_BASE_URL = "http://localhost:5001/api"
+API_BASE_URL = "http://localhost:8000/api"
 TEST_DATA_DIR = "test-data"
 
 

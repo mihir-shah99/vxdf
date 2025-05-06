@@ -16,7 +16,7 @@ from playwright.async_api import async_playwright, Error as PlaywrightError
 
 
 # Configuration
-FRONTEND_URL = "http://localhost:5173"
+FRONTEND_URL = "http://localhost:3000"
 TEST_DATA_DIR = "test-data"
 
 

@@ -23,26 +23,33 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Create metadata with naming convention
+metadata = MetaData(naming_convention={
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s"
+})
+
+# Create base class for models
+Base = declarative_base(metadata=metadata)
+
 # Create SQLAlchemy engine with improved error handling
 try:
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
-        pool_recycle=300
+        pool_recycle=300,
+        connect_args={"check_same_thread": False}  # Required for SQLite
     )
     logger.info(f"Connected to database at {DB_PATH}")
 except Exception as e:
     logger.error(f"Error connecting to database: {e}")
     raise
 
-# Create metadata with extend_existing=True to handle existing tables
-metadata = MetaData()
-
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create base class for models with extend_existing=True
-Base = declarative_base(metadata=metadata)
 
 def get_db():
     """
@@ -62,18 +69,13 @@ def init_db():
     Initialize the database, creating tables if they don't exist.
     """
     try:
-        # Import models using relative imports to avoid circular issues
-        try:
-            # Try relative import first
-            from . import finding
-        except ImportError:
-            # Fall back to absolute import
-            from api.models import finding
+        # Import models here to avoid circular imports
+        from api.models.finding import Finding, Evidence
         
+        # Create tables
         logger.info("Creating database tables...")
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully.")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
-        # Log but don't raise to allow server to continue running
-        # This is often due to table already existing which isn't critical
+        raise  # Raise the error to ensure we know if initialization fails

@@ -11,8 +11,9 @@ function cleanup {
 # Register the cleanup function on exit
 trap cleanup EXIT
 
-# Set the paths
-ROOT_DIR=$(pwd)
+# Set the paths - use script's directory as reference
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 API_DIR="$ROOT_DIR/api"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 

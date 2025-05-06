@@ -6,11 +6,7 @@ import datetime
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Text, ForeignKey, JSON, Enum
 from sqlalchemy.orm import relationship
 
-# Try different import paths for Base
-try:
-    from models.database import Base
-except ImportError:
-    from api.models.database import Base
+from api.models.database import Base
 
 class Finding(Base):
     """
@@ -28,8 +24,8 @@ class Finding(Base):
     severity = Column(String(50), nullable=True)  # CRITICAL, HIGH, MEDIUM, LOW
     cvss_score = Column(Float, nullable=True)
     cwe_id = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC), onupdate=lambda: datetime.datetime.now(datetime.UTC))
     
     # Source code location information
     file_path = Column(String(1024), nullable=True)
@@ -49,8 +45,8 @@ class Finding(Base):
     # VXDF output data
     vxdf_data = Column(JSON, nullable=True)
     
-    # Relationships - Use fully qualified class name to avoid resolution issues
-    evidence = relationship("api.models.finding.Evidence", back_populates="finding", cascade="all, delete-orphan")
+    # Relationships
+    evidence = relationship("Evidence", backref="finding", cascade="all, delete-orphan")
 
 class Evidence(Base):
     """
@@ -64,7 +60,4 @@ class Evidence(Base):
     evidence_type = Column(String(100), nullable=False)  # http_request, stack_trace, etc.
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=False)  # The actual evidence data
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    
-    # Relationship back to finding - Use fully qualified class name
-    finding = relationship("api.models.finding.Finding", back_populates="evidence")
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))

@@ -8,6 +8,7 @@ import json
 import uuid
 import datetime
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 from werkzeug.utils import secure_filename
@@ -30,14 +31,12 @@ try:
     from models.finding import Finding
     from parsers import ParserType, get_parser
     from core.engine import ValidationEngine
-    from api import api_bp  # Import the API blueprint
 except ImportError:
     # Fall back to absolute imports (when imported as a module)
     from api.models.database import init_db, SessionLocal
     from api.models.finding import Finding
     from api.parsers import ParserType, get_parser
     from api.core.engine import ValidationEngine
-    from api.api import api_bp  # Import the API blueprint
 
 # Import config with fallback
 try:
@@ -72,10 +71,16 @@ app = Flask(
 )
 app.secret_key = os.environ.get("SESSION_SECRET", os.urandom(24))
 
-# Register the API blueprint
-app.register_blueprint(api_bp)
-
 # Configure logging
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_DIR / "vxdf_validate.log"),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 # Initialize database
@@ -191,32 +196,23 @@ def results():
     Display validation results.
     """
     filename = request.args.get('filename')
-    
     if not filename:
         flash('No results file specified', 'danger')
         return redirect(url_for('index'))
     
-    # Ensure filename is secure
-    filename = secure_filename(filename)
-    filepath = OUTPUT_DIR / filename
-    
-    if not filepath.exists():
-        flash('Results file not found', 'danger')
-        return redirect(url_for('index'))
-    
     try:
-        # Load VXDF document
-        from api.models.vxdf import VXDFDocument
+        results_path = OUTPUT_DIR / filename
+        if not results_path.exists():
+            flash('Results file not found', 'danger')
+            return redirect(url_for('index'))
         
-        with open(filepath, 'r', encoding='utf-8') as f:
-            vxdf_content = f.read()
-        
-        vxdf_doc = VXDFDocument.from_json(vxdf_content)
+        with open(results_path, 'r', encoding='utf-8') as f:
+            results = json.load(f)
         
         return render_template('results.html', 
-                              version=__version__,
-                              vxdf=vxdf_doc,
-                              filename=filename)
+                             version=__version__,
+                             filename=filename,
+                             results=results)
     
     except Exception as e:
         logger.error(f"Error displaying results: {e}", exc_info=True)
@@ -226,142 +222,34 @@ def results():
 @app.route('/download/<filename>')
 def download_results(filename):
     """
-    Download VXDF results file.
+    Download results file.
     """
-    # Ensure filename is secure
-    filename = secure_filename(filename)
-    filepath = OUTPUT_DIR / filename
-    
-    if not filepath.exists():
-        flash('Results file not found', 'danger')
+    try:
+        return send_file(OUTPUT_DIR / filename,
+                        mimetype='application/json',
+                        as_attachment=True,
+                        download_name=filename)
+    except Exception as e:
+        logger.error(f"Error downloading file: {e}", exc_info=True)
+        flash(f"Error downloading file: {str(e)}", 'danger')
         return redirect(url_for('index'))
-    
-    return send_file(filepath, as_attachment=True, download_name=filename)
-
-@app.route('/api/findings')
-def api_findings():
-    """
-    API endpoint to get findings.
-    """
-    try:
-        db = SessionLocal()
-        
-        # Get query parameters
-        limit = request.args.get('limit', 10, type=int)
-        offset = request.args.get('offset', 0, type=int)
-        vuln_type = request.args.get('vuln_type')
-        exploitable = request.args.get('exploitable')
-        
-        # Build query
-        query = db.query(Finding)
-        
-        if vuln_type:
-            query = query.filter(Finding.vulnerability_type == vuln_type)
-        
-        if exploitable == 'true':
-            query = query.filter(Finding.is_exploitable == True)
-        elif exploitable == 'false':
-            query = query.filter(Finding.is_exploitable == False)
-        
-        # Get total count
-        total = query.count()
-        
-        # Apply pagination
-        findings = query.order_by(Finding.created_at.desc()).offset(offset).limit(limit).all()
-        
-        # Convert to JSON-serializable format
-        result = []
-        for finding in findings:
-            result.append({
-                'id': finding.id,
-                'name': finding.name,
-                'vulnerability_type': finding.vulnerability_type,
-                'severity': finding.severity,
-                'is_validated': finding.is_validated,
-                'is_exploitable': finding.is_exploitable,
-                'created_at': finding.created_at.isoformat() if finding.created_at else None
-            })
-        
-        return jsonify({
-            'findings': result,
-            'total': total,
-            'limit': limit,
-            'offset': offset
-        })
-    
-    except Exception as e:
-        logger.error(f"Error in API: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
-    
-    finally:
-        db.close()
-
-@app.route('/api/finding/<finding_id>')
-def api_finding(finding_id):
-    """
-    API endpoint to get a specific finding.
-    """
-    try:
-        db = SessionLocal()
-        
-        finding = db.query(Finding).filter(Finding.id == finding_id).first()
-        
-        if not finding:
-            return jsonify({'error': 'Finding not found'}), 404
-        
-        # Get evidence
-        evidence_list = []
-        for evidence in finding.evidence:
-            evidence_list.append({
-                'id': evidence.id,
-                'evidence_type': evidence.evidence_type,
-                'description': evidence.description,
-                'content': evidence.content,
-                'created_at': evidence.created_at.isoformat() if evidence.created_at else None
-            })
-        
-        result = {
-            'id': finding.id,
-            'source_id': finding.source_id,
-            'source_type': finding.source_type,
-            'vulnerability_type': finding.vulnerability_type,
-            'name': finding.name,
-            'description': finding.description,
-            'severity': finding.severity,
-            'cvss_score': finding.cvss_score,
-            'cwe_id': finding.cwe_id,
-            'file_path': finding.file_path,
-            'line_number': finding.line_number,
-            'column': finding.column,
-            'is_validated': finding.is_validated,
-            'is_exploitable': finding.is_exploitable,
-            'validation_date': finding.validation_date.isoformat() if finding.validation_date else None,
-            'validation_message': finding.validation_message,
-            'validation_attempts': finding.validation_attempts,
-            'created_at': finding.created_at.isoformat() if finding.created_at else None,
-            'updated_at': finding.updated_at.isoformat() if finding.updated_at else None,
-            'evidence': evidence_list
-        }
-        
-        return jsonify(result)
-    
-    except Exception as e:
-        logger.error(f"Error in API: {e}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
-    
-    finally:
-        db.close()
 
 @app.errorhandler(404)
 def page_not_found(e):
     """Handle 404 errors."""
-    return render_template('404.html', version=__version__), 404
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Not found'}), 404
+    return render_template('404.html'), 404
 
 @app.errorhandler(500)
 def server_error(e):
     """Handle 500 errors."""
-    return render_template('500.html', version=__version__), 500
+    logger.error(f"Server error: {e}", exc_info=True)
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Internal server error'}), 500
+    return render_template('500.html'), 500
 
-# Initialize app
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5001))
+    logger.info(f"Starting VXDF Validate on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=True)
