@@ -1,19 +1,77 @@
-# VXDF Validate
+# <img src="frontend/src/assets/logo.png" alt="VXDF Logo" width="48" style="vertical-align:middle;"/> VXDF
 
-VXDF (Validated eXploitable Data Flow) is a security validation application for verifying and exploiting security findings.
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue)
+![Frontend](https://img.shields.io/badge/frontend-React%2FTS-blue)
+![Backend](https://img.shields.io/badge/backend-Python%2FFlask-yellow)
 
-## Overview
+---
 
-The VXDF Validate tool helps security professionals validate security findings from various scanners and generate standardized reports. It provides:
+## 🖼️ Demo
 
-- Parsing of security findings from various formats (SARIF, JSON, CSV)
-- Validation of findings through dynamic analysis
-- Exploitation verification
-- Standardized reporting using the VXDF format
+<img src="frontend/src/assets/dashboard.png" alt="VXDF Dashboard" width="100%" style="border-radius:8px;box-shadow:0 2px 8px #0002;"/>
 
-## Project Structure
+*VXDF Dashboard*
 
-The application uses a clean architecture with clear separation of concerns:
+---
+
+> **VXDF (Validated eXploitable Data Flow)** is a next-generation security validation platform for verifying, validating, and reporting on security findings from any scanner.
+
+---
+
+## 📑 Table of Contents
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture)
+- [Key Features](#key-features)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Running the Application](#running-the-application)
+- [Dynamic Configuration](#dynamic-configuration)
+- [Documentation](#documentation)
+- [License](#license)
+- [Author](#author)
+
+---
+
+## 📝 Overview
+VXDF Validate helps security professionals validate findings from any scanner, automate exploitability checks, and generate standardized, actionable reports. The platform is fully API-driven, highly modular, and features a beautiful, modern UI.
+
+---
+
+## 🖼️ Screenshots
+
+| Dashboard | Sidebar | Upload |
+|-----------|---------|--------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Sidebar](docs/screenshots/sidebar.png) | ![Upload](docs/screenshots/upload.png) |
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD;
+  A[Frontend (React/TS)] -- REST API --> B[Backend API (Flask/Python)]
+  B -- DB ORM --> C[(SQLite/Postgres)]
+  B -- File Parsers --> D[Parsers (SARIF, JSON, CSV)]
+  B -- Validation Engine --> E[Validators (Docker/Native)]
+  B -- Reporting --> F[Report Generator]
+```
+
+---
+
+## ✨ Key Features
+- **Dynamic, API-driven UI**: All data, navigation, and alerts are fetched from APIs or config files.
+- **Modern Dashboard**: Beautiful charts, animated stats, and glassmorphism design.
+- **Modular Sidebar**: Navigation is fully dynamic and easily configurable.
+- **File Upload & Parsing**: Supports SARIF, JSON, CSV, and more.
+- **Automated Validation**: Exploitability checks for each finding.
+- **Standardized Reporting**: VXDF format for easy integration and compliance.
+- **Responsive & Accessible**: Works on all modern browsers and devices.
+
+---
+
+## 📁 Project Structure
 
 ```
 vxdf/
@@ -22,124 +80,130 @@ vxdf/
 │   ├── models/         # Data models
 │   ├── parsers/        # Input format parsers
 │   └── validators/     # Vulnerability validators
-├── engine/             # Template and static files
-│   ├── templates/      # Flask HTML templates
-│   └── static/         # CSS, JS, and other static assets
 ├── frontend/           # React/TypeScript frontend
-├── scripts/            # Utility scripts
-│   ├── fix_paths.py    # Script to fix path references
-│   ├── fix_templates.py # Script to set up templates
-│   └── startup.sh      # Main startup script
-├── docs/               # Documentation
-├── templates → engine/templates  # Symlink
-└── static → engine/static        # Symlink
+│   ├── src/assets/     # Logo and images
+│   └── ...
+├── scripts/            # Utility scripts (optional)
+├── docs/               # Documentation & screenshots
 ```
 
-## Key Features
+---
 
-- **Consistent Path Handling**: Uses pathlib.Path for reliable path resolution
-- **Flexible Deployment**: Works in development and production environments
-- **Modular Design**: Clean separation between components
-- **Backward Compatibility**: Support for legacy module structure
-
-## Installation
+## 🚀 Installation
 
 ### Prerequisites
-
 - Python 3.9+
 - Node.js 16+ and npm
 - Git
 
 ### Setup
-
-1. Clone the repository:
 ```bash
 git clone https://github.com/your-username/vxdf.git
 cd vxdf
-```
-
-2. Install Python dependencies:
-```bash
 pip install -r api/requirements.txt
-```
-
-3. Install frontend dependencies:
-```bash
 cd frontend
 npm install
 cd ..
 ```
 
-## Running the Application
+---
 
-### Using the startup script (recommended)
+## ▶️ Running the Application
 
-The easiest way to run the application is with the startup script:
-
+### Start the backend (API):
 ```bash
-./scripts/startup.sh
+python3 -m api.server --port 5001
 ```
 
-This will:
-1. Run path fixing scripts to ensure consistent path handling
-2. Create necessary symlinks for templates and static files
-3. Start the API server on port 5001
-4. Start the frontend development server on port 5173
-
-You can customize the ports:
-
+### Start the frontend (SPA):
 ```bash
-./scripts/startup.sh 8000 3000  # Run API on port 8000 and frontend on port 3000
+npm run dev --prefix frontend
 ```
 
-### Running components manually
+### Access the app:
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- API: [http://localhost:5001](http://localhost:5001)
+- API Docs: [http://localhost:5001/apidocs](http://localhost:5001/apidocs)
 
-If you prefer to run the components separately:
+---
 
-1. Run the template fixing script first:
-```bash
-python3 scripts/fix_templates.py
-```
+## ⚙️ Dynamic Configuration
+- **Sidebar navigation**: Driven by `frontend/src/config/sidebarConfig.ts` (or API in future)
+- **Dashboard data**: All stats, charts, and tables are fetched from the backend API
+- **Branding**: Logo and product name are configurable
+- **Alerts/Notifications**: (Planned) Will be fetched from API
 
-2. Start the API server:
-```bash
-cd api
-python3 main.py
-```
+---
 
-3. Start the frontend server (in a separate terminal):
-```bash
-cd frontend
-npm run dev
-```
+## 📚 Documentation
+- [Startup Guide](docs/STARTUP.md)
+- [API Documentation](docs/API.md)
+- [VXDF Format](docs/Validated%20Exploitable%20Data%20Flow%20(VXDF)%20Format%20MD.md)
 
-## Path Handling Solution
+---
 
-This project uses a robust approach to path handling that solves common issues:
+## 📝 License
 
-- Uses `pathlib.Path` consistently throughout the codebase
-- Centralizes path definitions in `api/config.py`
-- Creates symlinks for Flask template and static directories
-- Provides automated scripts to fix path references and create templates
-- Sets PYTHONPATH to include the project root during startup
-- Handles both absolute and relative imports with fallbacks
+This project is licensed under the Apache License 2.0 — see the [LICENSE](./LICENSE) file for details.
 
-If you encounter any path-related issues, simply run:
-```bash
-python3 scripts/fix_paths.py   # Fix path references in code
-python3 scripts/fix_templates.py  # Create template symlinks
-```
 
-## Documentation
+## 👤 Author
+Mihir Shah <mihirshah@vxdf.org>
 
-- [Installation Guide](INSTALLATION.md) - Detailed installation instructions
-- [Startup Guide](docs/STARTUP.md) - How to run the application
-- [API Documentation](docs/API.md) - API endpoints reference
+---
 
-## License
+## Quickstart for Contributors
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+1. **Clone the repo and install dependencies:**
+   ```bash
+   cd api && pip install -r requirements.txt
+   cd ../frontend && npm install
+   ```
 
-## Author
+2. **Start the backend:**
+   ```bash
+   python3 -m api.server --port 5001
+   ```
 
-Mihir Shah <mihir@mihirshah.tech> 
+3. **Start the frontend:**
+   ```bash
+   npm run dev --prefix frontend
+   ```
+
+4. **Visit:** [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Troubleshooting
+- If you see proxy errors, make sure the backend is running on port 5001.
+- If you see port conflicts, kill any processes using ports 5001 or 3000:
+  ```bash
+  lsof -ti:5001,3000 | xargs kill -9
+  ```
+- All API endpoints are under `/api/*`.
+- The backend is API-only. There are no Flask-rendered pages or templates.
+
+---
+
+## Makefile
+A `Makefile` is provided for easy startup and health checks:
+
+- `make dev` — Start both backend and frontend in dev mode.
+- `make check` — Run health checks to ensure both servers are up and API endpoints respond.
+
+---
+
+## Backend
+- **Entrypoint:** Always start the backend with `python3 -m api.server --port 5001`.
+- **API Docs:** Swagger UI is available at `/apidocs` when the backend is running.
+- **Environment:** See `api/.env.example` for environment variables.
+
+## Frontend
+- **Proxy:** The frontend proxies `/api` requests to `http://localhost:5001` by default.
+- **Environment:** See `frontend/.env.example` for environment variables.
+
+---
+
+## Contributing
+- Please read the updated onboarding and troubleshooting sections above before opening issues.
+- PRs should pass all health checks in the Makefile. 

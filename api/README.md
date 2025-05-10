@@ -2,21 +2,44 @@
 
 This directory contains the VXDF (Validated eXploitable Data Flow) API, which serves as the backend for the VXDF validation application. It provides RESTful endpoints for processing security scan results, validating vulnerabilities, and generating standardized VXDF reports.
 
+## Quickstart
+
+```bash
+pip install -r requirements.txt
+python3 -m api.server --port 5001
+```
+
+- API endpoints are available at `/api/*`.
+- Swagger/OpenAPI docs: [http://localhost:5001/apidocs](http://localhost:5001/apidocs)
+- The backend is API-only. There are no Flask-rendered pages or templates.
+
+## Troubleshooting
+- If you see port conflicts, kill any processes using ports 5001 or 3000:
+  ```bash
+  lsof -ti:5001,3000 | xargs kill -9
+  ```
+- If you see proxy errors in the frontend, make sure the backend is running on port 5001.
+
+## Makefile
+- `make dev` — Start backend and frontend together
+- `make check` — Run health checks on API endpoints
+
 ## Structure
 
 ```
 api/
-├── main.py              # Application entry point
-├── api.py               # API endpoint definitions
-├── server.py            # Flask server implementation
-├── config.py            # Configuration settings
-├── __init__.py          # Package initialization
-├── models/              # Data models and database definitions
-├── validators/          # Validation logic for different vulnerability types
-├── core/                # Core business logic
-├── parsers/             # Data parsers (SARIF, etc.)
-└── utils/               # Utility functions
+├── server.py         # Flask server (entrypoint)
+├── api.py            # API endpoint definitions
+├── config.py         # Configuration settings
+├── models/           # Data models and database definitions
+├── validators/       # Validation logic for different vulnerability types
+├── core/             # Core business logic
+├── parsers/          # Data parsers (SARIF, etc.)
+└── utils/            # Utility functions
 ```
+
+## Environment
+- See `.env.example` for environment variables.
 
 ## Key Components
 
@@ -59,16 +82,10 @@ Parsers for different security tool outputs:
 
 ## Running the API
 
-From the `api/` directory:
+**Always start the backend using:**
 
 ```bash
-python main.py
-```
-
-Or from the project root:
-
-```bash
-./scripts/start.sh
+python3 -m api.server --port 5001
 ```
 
 The API server will be available at http://localhost:5001.

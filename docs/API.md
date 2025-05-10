@@ -10,11 +10,18 @@ All API endpoints are relative to the base URL:
 http://localhost:5001/api
 ```
 
-For production deployments, replace with your actual domain and port. You can customize the port when running the application:
+To run the application locally:
 
-```bash
-./scripts/startup.sh <api_port> <frontend_port>
-```
+- Start the backend:
+  ```bash
+  python3 -m api.server --port 5001
+  ```
+- Start the frontend:
+  ```bash
+  npm run dev --prefix frontend
+  ```
+
+For production deployments, replace with your actual domain and port.
 
 ## Authentication
 

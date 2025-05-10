@@ -1,10 +1,34 @@
 # VXDF Frontend
 
-The VXDF (Validated Exploitable Data Flow) Frontend is a modern, responsive web application built with React, TypeScript, and Tailwind CSS. It provides an intuitive user interface for interacting with the VXDF Engine, allowing users to upload security scanning results, view vulnerability validations, and generate comprehensive reports.
+This directory contains the React/TypeScript frontend for VXDF Validate.
+
+## Quickstart
+
+```bash
+npm install
+npm run dev
+```
+
+- The frontend runs on [http://localhost:3000](http://localhost:3000) by default.
+- API requests to `/api/*` are proxied to the backend at `http://localhost:5001`.
+
+## Troubleshooting
+- If you see proxy errors, make sure the backend is running on port 5001.
+- If you see port conflicts, kill any processes using ports 3000 or 5001:
+  ```bash
+  lsof -ti:5001,3000 | xargs kill -9
+  ```
+
+## Makefile
+- `make dev` — Start backend and frontend together
+- `make check` — Run health checks on API endpoints
+
+## Environment
+- See `.env.example` for environment variables.
 
 ## Architecture Overview
 
-The frontend is built using a component-based architecture that prioritizes modularity, reusability, and type safety. It's designed to provide a seamless user experience while efficiently communicating with the backend VXDF Engine.
+The frontend is built using a component-based architecture that prioritizes modularity, reusability, and type safety. It's designed to provide a seamless user experience while efficiently communicating with the VXDF API backend.
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -104,7 +128,7 @@ The application uses React's built-in state management through:
 1. **Input Processing**:
    - Users upload security scan files through the FileUpload component.
    - The appropriate parser (e.g., SARIFParser) processes the file and extracts vulnerabilities.
-   - Extracted vulnerabilities are sent to the backend for validation.
+   - Extracted vulnerabilities are sent to the backend API for validation.
 
 2. **Validation Display**:
    - The Dashboard component shows validation progress and results.
@@ -158,11 +182,11 @@ The application uses Vite as its build tool:
 - **Lucide React**: Icon library
 - **Vite**: Build tool and development server
 
-## Integration with VXDF Engine
+## Integration with VXDF API
 
-The frontend communicates with the VXDF Engine backend through RESTful APIs:
+The frontend communicates with the VXDF API backend through RESTful APIs:
 
-1. **File Upload**: Security scan results are uploaded to the engine.
+1. **File Upload**: Security scan results are uploaded to the API.
 2. **Validation Requests**: Specific vulnerabilities are sent for validation.
 3. **Status Polling**: The frontend checks validation progress.
 4. **Results Retrieval**: Validated findings are fetched and displayed.
