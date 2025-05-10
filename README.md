@@ -1,4 +1,8 @@
-# <img src="frontend/src/assets/VXDF logo.png " alt="VXDF Logo" width="120" height="90" style="vertical-align:middle;"/> VXDF
+<div align="center">
+<img src="frontend/src/assets/VXDF logo.png" alt="VXDF Logo" width="200"/>
+</div>
+
+# VXDF: Validated eXploitable Data Flow
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
