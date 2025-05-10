@@ -1,5 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, Upload, Settings, Database, AlertTriangle, FileText, GitBranch } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import { sidebarConfig } from '../config/sidebarConfig';
+import logo from '../assets/logo.png';
 
 interface SidebarProps {
   activeView: string;
@@ -7,50 +9,48 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
-  const navItems = [
-    { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { id: 'upload', icon: <Upload size={20} />, label: 'Upload Scans' },
-    { id: 'vulnerabilities', icon: <AlertTriangle size={20} />, label: 'Vulnerabilities' },
-    { id: 'reports', icon: <FileText size={20} />, label: 'Reports' },
-    { id: 'environments', icon: <GitBranch size={20} />, label: 'Environments' },
-    { id: 'database', icon: <Database size={20} />, label: 'Database' },
-    { id: 'settings', icon: <Settings size={20} />, label: 'Settings' }
-  ];
-
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-4">
-        <h2 className="text-sm font-medium text-gray-500">NAVIGATION</h2>
+    <div className="w-64 bg-gray-900 text-white flex flex-col min-h-screen border-r border-gray-800">
+      <div className="p-6 pb-2 flex items-center gap-2">
+        <img src={logo} alt="VXDF Logo" className="h-8 w-8" />
+        <span className="text-blue-400 font-bold text-xl">VXDF</span>
+        <span className="ml-auto bg-blue-600 text-xs px-2 py-1 rounded-full font-semibold">Beta</span>
       </div>
-      <nav className="flex-1">
-        <ul>
-          {navItems.map(item => (
-            <li key={item.id}>
-              <button
-                onClick={() => setActiveView(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium ${
-                  activeView === item.id 
-                    ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600' 
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className={activeView === item.id ? 'text-blue-600' : 'text-gray-500'}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="p-4 mt-auto">
-        <div className="rounded-md bg-blue-50 p-3">
-          <div className="flex items-center">
-            <div className="text-blue-900">
-              <p className="text-sm font-medium">Validator v0.1.0</p>
-              <p className="text-xs">Community Edition</p>
-            </div>
+      {sidebarConfig.map(section => (
+        <React.Fragment key={section.section}>
+          <div className="px-6 pt-4 pb-1">
+            <h2 className="text-xs font-semibold text-gray-400 tracking-wider">{section.section}</h2>
           </div>
+          <ul>
+            {section.items.map(item => {
+              const IconComponent = typeof LucideIcons[item.icon as keyof typeof LucideIcons] === 'function'
+                ? LucideIcons[item.icon as keyof typeof LucideIcons] as React.ComponentType<any>
+                : null;
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => setActiveView(item.id)}
+                    className={`w-full flex items-center gap-3 px-6 py-3 text-sm font-medium rounded transition-colors ${
+                      activeView === item.id
+                        ? 'bg-blue-700 text-white shadow border-l-4 border-blue-400'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    <span className={activeView === item.id ? 'text-white' : 'text-blue-400'}>
+                      {IconComponent && <IconComponent size={20} />}
+                    </span>
+                    <span>{item.label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </React.Fragment>
+      ))}
+      <div className="p-6 mt-auto">
+        <div className="rounded-md bg-blue-900/60 p-4 flex flex-col items-start">
+          <span className="text-blue-300 font-bold text-sm">Validator v0.1.0</span>
+          <span className="text-xs text-blue-200">Community Edition</span>
         </div>
       </div>
     </div>

@@ -1,39 +1,21 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import styled from 'styled-components';
-import Sidebar from './Sidebar';
+import { Sidebar } from '../Sidebar';
 import TopBar from './TopBar';
 
-const LayoutContainer = styled.div`
-  display: flex;
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background.primary};
-`;
-
-const MainContent = styled.main<{ $isCollapsed: boolean }>`
-  flex: 1;
-  margin-left: ${({ $isCollapsed }) => ($isCollapsed ? '80px' : '280px')};
-  transition: margin-left ${({ theme }) => theme.transitions.default};
-  padding: ${({ theme }) => theme.space[6]};
-  overflow-x: hidden;
-`;
-
 const Layout: React.FC = () => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeView, setActiveView] = useState('dashboard');
 
   return (
-    <LayoutContainer>
-      <Sidebar
-        isCollapsed={isSidebarCollapsed}
-        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div className="flex min-h-screen bg-gray-900">
+      <Sidebar activeView={activeView} setActiveView={setActiveView} />
+      <div className="flex-1 flex flex-col">
         <TopBar />
-        <MainContent $isCollapsed={isSidebarCollapsed}>
+        <main className="flex-1 overflow-x-hidden p-6">
           <Outlet />
-        </MainContent>
+        </main>
       </div>
-    </LayoutContainer>
+    </div>
   );
 };
 

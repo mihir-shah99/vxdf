@@ -5,6 +5,7 @@ import logging
 import json
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+import shutil
 
 from api.models.finding import Finding
 
@@ -93,6 +94,9 @@ class DefaultValidator(Validator):
             }]
         )
 
+def is_docker_available():
+    return shutil.which('docker') is not None
+
 class ValidatorFactory:
     """
     Factory for creating validators for different vulnerability types.
@@ -103,10 +107,12 @@ class ValidatorFactory:
         Initialize the validator factory.
         """
         self._validators = {}
+        self._docker_available = is_docker_available()
     
     def get_validator(self, vulnerability_type: str) -> Optional[Validator]:
         """
         Get a validator for a specific vulnerability type.
+        If Docker is not available, always return DefaultValidator.
         
         Args:
             vulnerability_type: Type of vulnerability to validate
@@ -114,6 +120,10 @@ class ValidatorFactory:
         Returns:
             Validator instance or None if not supported
         """
+        if not self._docker_available:
+            logger.warning("Docker not available, using DefaultValidator for all types.")
+            return DefaultValidator()
+        
         try:
             if vulnerability_type == 'sql_injection':
                 # Attempt to import the validator

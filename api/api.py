@@ -168,6 +168,7 @@ def get_vulnerabilities():
         vuln_type = request.args.get('category')
         exploitable = request.args.get('exploitable')
         severity = request.args.get('severity')
+        validated = request.args.get('validated')
         
         # Build query
         query = db.query(Finding)
@@ -182,6 +183,11 @@ def get_vulnerabilities():
         
         if severity:
             query = query.filter(Finding.severity == severity)
+        
+        if validated == 'true':
+            query = query.filter(Finding.is_validated == True)
+        elif validated == 'false':
+            query = query.filter(Finding.is_validated == False)
         
         # Get total count
         total = query.count()
@@ -245,12 +251,22 @@ def get_stats():
         validated_findings = db.query(Finding).filter(Finding.is_validated == True).count()
         exploitable_findings = db.query(Finding).filter(Finding.is_exploitable == True).count()
         pending_findings = total_findings - validated_findings
-        
+
+        # Severity breakdown
+        severity_counts = db.query(Finding.severity, func.count(Finding.id)).group_by(Finding.severity).all()
+        by_severity = {s if s else 'UNKNOWN': c for s, c in severity_counts}
+
+        # Type breakdown
+        type_counts = db.query(Finding.vulnerability_type, func.count(Finding.id)).group_by(Finding.vulnerability_type).all()
+        by_type = {t if t else 'UNKNOWN': c for t, c in type_counts}
+
         return jsonify({
             'total': total_findings,
             'validated': validated_findings,
             'exploitable': exploitable_findings,
-            'pending': pending_findings
+            'pending': pending_findings,
+            'bySeverity': by_severity,
+            'byType': by_type
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -5,6 +5,8 @@ export interface Stats {
   exploitable: number;
   validated: number;
   pending: number;
+  bySeverity?: Record<string, number>;
+  byType?: Record<string, number>;
 }
 
 function isErrorResponse(data: unknown): data is { error: string } {
