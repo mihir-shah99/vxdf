@@ -1,0 +1,47 @@
++------------------+     REST API     +------------------+
+|                  |  ------------>  |                  |
+|  Frontend        |                  |  Backend API     |
+|  (React/TS)      |  <------------  |  (Flask/Python)  |
+|                  |                  |                  |
++------------------+                  +--------+---------+
+                                               |
+                                               | DB ORM
+                                               v
+                                        +------+------+
+                                        |             |
+                                        | SQLite/     |
+                                        | Postgres    |
+                                        |             |
+                                        +------+------+
+                                               ^
+                                               |
+                                               | File Parsers
+                                               v
+                                        +------+------+
+                                        |             |
+                                        | Parsers     |
+                                        | (SARIF,     |
+                                        |  JSON, CSV) |
+                                        |             |
+                                        +------+------+
+                                               ^
+                                               |
+                                               | Validation Engine
+                                               v
+                                        +------+------+
+                                        |             |
+                                        | Validators  |
+                                        | (Docker/    |
+                                        |  Native)    |
+                                        |             |
+                                        +------+------+
+                                               ^
+                                               |
+                                               | Reporting
+                                               v
+                                        +------+------+
+                                        |             |
+                                        | Report      |
+                                        | Generator   |
+                                        |             |
+                                        +-------------+ 

@@ -37,26 +37,15 @@
 ## 📝 Overview
 VXDF Validate helps security professionals validate findings from any scanner, automate exploitability checks, and generate standardized, actionable reports. The platform is fully API-driven, highly modular, and features a beautiful, modern UI.
 
----
 
-## 🖼️ Screenshots
-
-| Dashboard | Sidebar | Upload |
-|-----------|---------|--------|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Sidebar](docs/screenshots/sidebar.png) | ![Upload](docs/screenshots/upload.png) |
 
 ---
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TD;
-  A[Frontend (React/TS)] -- REST API --> B[Backend API (Flask/Python)]
-  B -- DB ORM --> C[(SQLite/Postgres)]
-  B -- File Parsers --> D[Parsers (SARIF, JSON, CSV)]
-  B -- Validation Engine --> E[Validators (Docker/Native)]
-  B -- Reporting --> F[Report Generator]
-```
+![VXDF Architecture](docs/screenshots/architecture.png)
+
+
 
 ---
 

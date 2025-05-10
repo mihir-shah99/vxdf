@@ -1,0 +1,24 @@
+graph TD
+    %% Styling
+    classDef frontend fill:#61dafb,stroke:#333,stroke-width:2px,color:#000
+    classDef backend fill:#f7df1e,stroke:#333,stroke-width:2px,color:#000
+    classDef database fill:#4db33d,stroke:#333,stroke-width:2px,color:#000
+    classDef component fill:#ff6b6b,stroke:#333,stroke-width:2px,color:#000
+
+    %% Nodes
+    A[Frontend\nReact/TypeScript]:::frontend
+    B[Backend API\nFlask/Python]:::backend
+    C[(Database\nSQLite/Postgres)]:::database
+    D[File Parsers\nSARIF/JSON/CSV]:::component
+    E[Validation Engine\nDocker/Native]:::component
+    F[Report Generator]:::component
+
+    %% Connections
+    A <-->|REST API| B
+    B <-->|DB ORM| C
+    B -->|Parse| D
+    B -->|Validate| E
+    B -->|Generate| F
+
+    %% Layout
+    linkStyle default stroke:#666,stroke-width:2px,fill:none 
