@@ -14,7 +14,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 # Default ports
-API_PORT=5000
+API_PORT=8888
 FRONTEND_PORT=3000
 
 # Check if custom ports are provided
@@ -38,10 +38,6 @@ echo "Setting PYTHONPATH to include $PROJECT_ROOT"
 echo "Running path fixing script to ensure consistent path handling..."
 python3 "$SCRIPT_DIR/fix_paths.py"
 
-# Run template fixing script
-echo "Running template fixing script to ensure templates and static files are available..."
-python3 "$SCRIPT_DIR/fix_templates.py"
-
 # Initialize database
 echo "Initializing database..."
 cd "$PROJECT_ROOT"
@@ -54,7 +50,7 @@ lsof -ti:$API_PORT,$FRONTEND_PORT | xargs kill -9 2>/dev/null || true
 
 # Start API server
 echo "Starting API server on port $API_PORT..."
-cd "$PROJECT_ROOT/engine"
+cd "$PROJECT_ROOT/api"
 export FLASK_APP=main.py
 export FLASK_ENV=development
 python3 main.py --port $API_PORT &

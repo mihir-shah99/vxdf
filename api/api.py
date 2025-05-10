@@ -244,11 +244,13 @@ def get_stats():
         total_findings = db.query(Finding).count()
         validated_findings = db.query(Finding).filter(Finding.is_validated == True).count()
         exploitable_findings = db.query(Finding).filter(Finding.is_exploitable == True).count()
+        pending_findings = total_findings - validated_findings
         
         return jsonify({
-            'total_findings': total_findings,
-            'validated_findings': validated_findings,
-            'exploitable_findings': exploitable_findings
+            'total': total_findings,
+            'validated': validated_findings,
+            'exploitable': exploitable_findings,
+            'pending': pending_findings
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

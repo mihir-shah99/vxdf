@@ -46,7 +46,7 @@ class Finding(Base):
     vxdf_data = Column(JSON, nullable=True)
     
     # Relationships
-    evidence = relationship("Evidence", backref="finding", cascade="all, delete-orphan")
+    evidence = relationship("api.models.finding.Evidence", cascade="all, delete-orphan")
 
 class Evidence(Base):
     """

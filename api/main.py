@@ -4,6 +4,7 @@ Main entry point for the VXDF Validate API.
 """
 import os
 import logging
+import argparse
 from pathlib import Path
 import sys
 
@@ -21,19 +22,21 @@ sys.path.insert(0, str(project_root))
 
 try:
     # Import server and API modules
-    from server import app
+    from api.server import app
+    from api.api import api_bp
     
-    # Try to import and register API blueprint if not already registered
-    try:
-        if not any(bp.name == 'api' for bp in app.blueprints.values()):
-            from api import api_bp
-            app.register_blueprint(api_bp)
-            logger.info("API blueprint registered")
-    except ImportError:
-        logger.warning("Could not import API blueprint")
+    # Register API blueprint
+    app.register_blueprint(api_bp, url_prefix='/api')
+    logger.info("API blueprint registered")
     
     if __name__ == "__main__":
-        port = int(os.environ.get("PORT", 5001))
+        # Parse command line arguments
+        parser = argparse.ArgumentParser(description='VXDF Validate API Server')
+        parser.add_argument('--port', type=int, default=5000, help='Port to run the server on')
+        args = parser.parse_args()
+        
+        # Use the port from command line arguments
+        port = args.port
         logger.info(f"Starting VXDF Validate on port {port}")
         app.run(host="0.0.0.0", port=port, debug=True)
 except Exception as e:

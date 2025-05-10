@@ -16,9 +16,7 @@ from pathlib import Path
 # Directories to process
 DIRS_TO_PROCESS = [
     'api',
-    'scripts',
-    'vxdf_validate',
-    'engine'
+    'scripts'
 ]
 
 # Regex patterns for replacements
