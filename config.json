@@ -1,0 +1,13 @@
+{
+  "theme": "default",
+  "themeVariables": {
+    "fontFamily": "arial",
+    "fontSize": "16px",
+    "primaryColor": "#61dafb",
+    "primaryTextColor": "#000",
+    "primaryBorderColor": "#333",
+    "lineColor": "#666",
+    "secondaryColor": "#f7df1e",
+    "tertiaryColor": "#4db33d"
+  }
+} 

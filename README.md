@@ -1,4 +1,4 @@
-# <img src="frontend/src/assets/logo.png" alt="VXDF Logo" width="48" style="vertical-align:middle;"/> VXDF
+# <img src="frontend/src/assets/VXDF logo.png " alt="VXDF Logo" width="120" height="90" style="vertical-align:middle;"/> VXDF
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
