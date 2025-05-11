@@ -73,12 +73,45 @@ vxdf/
 │   ├── models/         # Data models
 │   ├── parsers/        # Input format parsers
 │   └── validators/     # Vulnerability validators
+├── config/             # Configuration files
+│   └── config.json     # Main application configuration
+├── data/               # Database and data files
+│   └── vxdf_validate.db # SQLite database
+├── docs/               # Documentation
 ├── frontend/           # React/TypeScript frontend
-│   ├── src/assets/     # Logo and images
-│   └── ...
-├── scripts/            # Utility scripts (optional)
-├── docs/               # Documentation & screenshots
+│   ├── src/            # Frontend source code
+│   ├── package.json    # NPM dependencies
+│   └── vite.config.ts  # Frontend configuration
+├── logs/               # Log files
+│   ├── backend.log     # Backend log output
+│   └── frontend.log    # Frontend log output
+├── scripts/            # Application scripts
+│   ├── start-all.sh    # Start both backend and frontend
+│   ├── stop-all.sh     # Stop all services
+│   ├── start.sh        # Start just the backend
+│   └── start-frontend.sh # Start just the frontend
+├── test-data/          # Sample data for testing
+│   └── sample-sarif.json # Example SARIF file
+├── tests/              # Test scripts and utilities
+├── venv/               # Python virtual environment (created on first run)
+├── LICENSE             # License file
+├── Makefile            # Make targets for common operations
+├── README.md           # This file
+└── requirements.txt    # Python dependencies (symlink to api/requirements.txt)
 ```
+
+### Key Configuration Files
+
+- `api/requirements.txt` - Backend Python dependencies
+- `frontend/vite.config.ts` - Frontend configuration, including API proxy settings
+- `config/config.json` - Application configuration
+- `data/vxdf_validate.db` - SQLite database (created on first run)
+
+### Important Paths
+
+- Backend API: http://localhost:6789
+- Frontend UI: http://localhost:3000
+- Log files: `logs/backend.log` and `logs/frontend.log`
 
 ---
 
@@ -93,7 +126,7 @@ vxdf/
 ```bash
 git clone https://github.com/your-username/vxdf.git
 cd vxdf
-pip install -r api/requirements.txt
+pip install -r requirements.txt
 cd frontend
 npm install
 cd ..
@@ -103,20 +136,75 @@ cd ..
 
 ## ▶️ Running the Application
 
-### Start the backend (API):
+### Quick Start
+
+The easiest way to start the application is to use the single script:
+
 ```bash
-python3 -m api.server --port 5001
+# Start both backend and frontend with one command
+./scripts/start-all.sh
+
+# To stop all services
+./scripts/stop-all.sh
 ```
 
-### Start the frontend (SPA):
+The backend will be available at http://localhost:6789 and the frontend at http://localhost:3000.
+
+### Individual Services
+
+You can also start the services separately if needed:
+
 ```bash
-npm run dev --prefix frontend
+# Start just the backend API
+./scripts/start.sh
+
+# In a separate terminal, start just the frontend
+./scripts/start-frontend.sh
 ```
 
-### Access the app:
-- Frontend: [http://localhost:3000](http://localhost:3000)
-- API: [http://localhost:5001](http://localhost:5001)
-- API Docs: [http://localhost:5001/apidocs](http://localhost:5001/apidocs)
+### Manual Setup
+
+If you prefer to set up the application manually:
+
+#### Backend
+
+1. Create a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Initialize the database (if it doesn't exist):
+```bash
+python3 api/load_sarif_to_db.py
+```
+
+4. Start the API server:
+```bash
+python3 api/main.py
+```
+
+#### Frontend
+
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
 
 ---
 
@@ -135,50 +223,55 @@ npm run dev --prefix frontend
 
 ---
 
-## 📝 License
+## 🔧 Avoiding Common Issues
 
-This project is licensed under the Apache License 2.0 — see the [LICENSE](./LICENSE) file for details.
+1. **Import Order**: Always import models in the correct order to avoid circular imports:
+   - First import database modules
+   - Then import model classes
 
+2. **Database Connection**: Ensure the database file (`data/vxdf_validate.db`) is accessible and correctly initialized.
 
-## 👤 Author
-Mihir Shah <mihirshah@vxdf.org>
+3. **API Port**: The API runs on port 6789 by default. Make sure this port is available.
 
----
-
-## Quickstart for Contributors
-
-1. **Clone the repo and install dependencies:**
-   ```bash
-   cd api && pip install -r requirements.txt
-   cd ../frontend && npm install
-   ```
-
-2. **Start the backend:**
-   ```bash
-   python3 -m api.server --port 5001
-   ```
-
-3. **Start the frontend:**
-   ```bash
-   npm run dev --prefix frontend
-   ```
-
-4. **Visit:** [http://localhost:3000](http://localhost:3000)
+4. **Frontend Proxy**: The frontend uses a proxy to communicate with the API. Check `frontend/vite.config.ts` if you change the API port.
 
 ---
 
-## Troubleshooting
-- If you see proxy errors, make sure the backend is running on port 5001.
-- If you see port conflicts, kill any processes using ports 5001 or 3000:
-  ```bash
-  lsof -ti:5001,3000 | xargs kill -9
-  ```
-- All API endpoints are under `/api/*`.
-- The backend is API-only. There are no Flask-rendered pages or templates.
+## ❓ Troubleshooting
+
+If you encounter issues:
+
+1. **Reset the database**:
+```bash
+rm data/vxdf_validate.db
+python3 api/load_sarif_to_db.py
+```
+
+2. **Check logs**:
+```bash
+tail -f logs/backend.log
+tail -f logs/frontend.log
+```
+
+3. **Verify API is accessible**:
+```bash
+curl http://localhost:6789/api/stats
+```
+
+4. **Clear temporary files**:
+```bash
+rm -rf logs/*.log
+rm -f .vxdf_pids
+```
+
+5. **Fix port conflicts**:
+```bash
+lsof -ti:6789,3000 | xargs kill -9
+```
 
 ---
 
-## Makefile
+## 🛠️ Makefile
 A `Makefile` is provided for easy startup and health checks:
 
 - `make dev` — Start both backend and frontend in dev mode.
@@ -186,17 +279,16 @@ A `Makefile` is provided for easy startup and health checks:
 
 ---
 
-## Backend
-- **Entrypoint:** Always start the backend with `python3 -m api.server --port 5001`.
-- **API Docs:** Swagger UI is available at `/apidocs` when the backend is running.
-- **Environment:** See `api/.env.example` for environment variables.
+## 📝 License
 
-## Frontend
-- **Proxy:** The frontend proxies `/api` requests to `http://localhost:5001` by default.
-- **Environment:** See `frontend/.env.example` for environment variables.
+This project is licensed under the Apache License 2.0 — see the [LICENSE](./LICENSE) file for details.
 
 ---
 
-## Contributing
-- Please read the updated onboarding and troubleshooting sections above before opening issues.
-- PRs should pass all health checks in the Makefile. 
+## 👤 Author
+Mihir Shah <mihirshah@vxdf.org>
+
+---
+
+## 👥 Contributing
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [INSTALLATION.md](INSTALLATION.md) for details on our code of conduct and the process for submitting pull requests. 

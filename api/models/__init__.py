@@ -1,19 +1,20 @@
 """
-VXDF Validate data models.
-"""
-# First import the database components
-from api.models.database import Base, SessionLocal, init_db
+Database models package for VXDF Validate.
 
-# Then import the models in dependency order
+This package contains all database models used by the application.
+The import order is important to avoid circular imports:
+
+1. Import database.py first to set up the Base
+2. Import models using from api.models.xxx import XXX
+"""
+
+# Import Base and DB utilities first
+from api.models.database import Base, SessionLocal, init_db, get_db
+
+# Then import models
 from api.models.finding import Finding, Evidence
-from api.models.vxdf import (
-    VXDFDocument, VXDFFlow, VXDFMetadata, VXDFSummary, 
-    SeverityLevel, CodeLocation, DataFlowStep, EvidenceItem
-)
 
 __all__ = [
-    'Base', 'SessionLocal', 'init_db',
-    'Finding', 'Evidence',
-    'VXDFDocument', 'VXDFFlow', 'VXDFMetadata', 'VXDFSummary',
-    'SeverityLevel', 'CodeLocation', 'DataFlowStep', 'EvidenceItem'
+    'Base', 'SessionLocal', 'init_db', 'get_db',
+    'Finding', 'Evidence'
 ]

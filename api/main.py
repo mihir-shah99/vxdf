@@ -22,17 +22,19 @@ sys.path.insert(0, str(project_root))
 
 try:
     # Import server and API modules
-    from api.server import app
+    from api.server import create_app
     from api.api import api_bp
     
-    # Register API blueprint
-    app.register_blueprint(api_bp, url_prefix='/api')
-    logger.info("API blueprint registered")
+    # Create the Flask app
+    app = create_app()
+    logger.info("Flask app created")
+    
+    # Register API blueprint - removed as it's already done in create_app()
     
     if __name__ == "__main__":
         # Parse command line arguments
         parser = argparse.ArgumentParser(description='VXDF Validate API Server')
-        parser.add_argument('--port', type=int, default=5000, help='Port to run the server on')
+        parser.add_argument('--port', type=int, default=6789, help='Port to run the server on')
         args = parser.parse_args()
         
         # Use the port from command line arguments

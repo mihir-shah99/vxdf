@@ -18,7 +18,10 @@ except ImportError:
         # Default fallbacks if config can't be imported
         API_DIR = Path(__file__).resolve().parent.parent
         PROJECT_ROOT = API_DIR.parent
-        DB_PATH = PROJECT_ROOT / "vxdf_validate.db"
+        # Ensure data directory exists
+        DATA_DIR = PROJECT_ROOT / "data"
+        DATA_DIR.mkdir(exist_ok=True)
+        DB_PATH = DATA_DIR / "vxdf_validate.db"
         DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 logger = logging.getLogger(__name__)
@@ -69,10 +72,7 @@ def init_db():
     Initialize the database, creating tables if they don't exist.
     """
     try:
-        # Import models here to avoid circular imports
-        from api.models.finding import Finding, Evidence
-        
-        # Create tables
+        # Create tables directly from metadata
         logger.info("Creating database tables...")
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully.")

@@ -18,8 +18,9 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from api.models.database import SessionLocal, get_db
+# Ensure models are imported first to get registered with declarative base
 from api.models.finding import Finding, Evidence
+from api.models.database import SessionLocal, get_db
 from api.parsers import ParserType, get_parser
 from api.core.engine import ValidationEngine
 from api.config import OUTPUT_DIR, SUPPORTED_VULN_TYPES
@@ -39,7 +40,7 @@ def transform_finding_to_vulnerability(finding: Finding) -> dict:
     Transform a Finding model instance into a frontend-compatible vulnerability format.
     """
     evidence_list = []
-    if finding.evidence:
+    if hasattr(finding, 'evidence') and finding.evidence:
         for e in finding.evidence:
             evidence_list.append({
                 'id': e.id,
@@ -310,8 +311,8 @@ def get_vulnerabilities():
         # Get total count
         total = query.count()
         
-        # Apply pagination
-        findings = query.order_by(Finding.created_at.desc()).offset(offset).limit(limit).all()
+        # Apply pagination - without using created_at (which might be NULL)
+        findings = query.order_by(Finding.id.desc()).offset(offset).limit(limit).all()
         
         # Transform to frontend format
         result = []
@@ -327,7 +328,7 @@ def get_vulnerabilities():
     
     except SQLAlchemyError as e:
         logger.error(f"Database error in get_vulnerabilities: {e}", exc_info=True)
-        return jsonify({'error': 'Database error occurred'}), 500
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
     except Exception as e:
         logger.error(f"Error in get_vulnerabilities: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
@@ -371,7 +372,7 @@ def get_vulnerability(vulnerability_id):
     
     except SQLAlchemyError as e:
         logger.error(f"Database error in get_vulnerability: {e}", exc_info=True)
-        return jsonify({'error': 'Database error occurred'}), 500
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
     except Exception as e:
         logger.error(f"Error in get_vulnerability: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
@@ -430,6 +431,7 @@ def get_stats():
             'byType': by_type
         })
     except Exception as e:
+        logger.error(f"Error in get_stats: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/findings', methods=['GET'])
@@ -468,6 +470,7 @@ def get_findings():
             ]
         })
     except Exception as e:
+        logger.error(f"Error in get_findings: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/supported-types', methods=['GET'])

@@ -25,19 +25,11 @@ except ImportError:
     except ImportError:
         __version__ = "1.0.0"
 
-# Import models and parsers with relative imports when possible
-try:
-    # Try relative imports first (when run within api directory)
-    from models.database import init_db, SessionLocal
-    from models.finding import Finding
-    from parsers import ParserType, get_parser
-    from core.engine import ValidationEngine
-except ImportError:
-    # Fall back to absolute imports (when imported as a module)
-    from api.models.database import init_db, SessionLocal
-    from api.models.finding import Finding
-    from api.parsers import ParserType, get_parser
-    from api.core.engine import ValidationEngine
+# Ensure models are imported first to register with declarative base
+from api.models.finding import Finding, Evidence
+from api.models.database import init_db, SessionLocal
+from api.parsers import ParserType, get_parser
+from api.core.engine import ValidationEngine
 
 # Import config with fallback
 try:
