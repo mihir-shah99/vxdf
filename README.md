@@ -24,43 +24,100 @@
 ---
 
 ## 📑 Table of Contents
-- [Overview](#overview)
-- [Screenshots](#screenshots)
-- [Architecture](#architecture)
-- [Key Features](#key-features)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Running the Application](#running-the-application)
+- [Core Architecture](#core-architecture)
+- [Key Components](#-key-components)
+- [Validation Workflow](#-validation-workflow)
+- [Data Model](#-data-model)
+- [Project Structure](#-project-structure)
+- [Installation](#-installation)
+- [Running the Application](#-running-the-application)
 - [Dynamic Configuration](#dynamic-configuration)
-- [Documentation](#documentation)
-- [License](#license)
-- [Author](#author)
+- [Documentation](#-documentation)
+- [License](#-license)
 
 ---
 
-## 📝 Overview
-VXDF Validate helps security professionals validate findings from any scanner, automate exploitability checks, and generate standardized, actionable reports. The platform is fully API-driven, highly modular, and features a beautiful, modern UI.
+## 🏛️ Core Architecture
 
+VXDF follows a modular microservices architecture with clear separation between:
 
-
----
-
-## 🏗️ Architecture
+1. **Validation Engine** - Core vulnerability verification logic
+2. **API Layer** - RESTful interface for frontend integration
+3. **Data Processing** - SARIF/DAST/CycloneDX parsing pipeline
+4. **Evidence Collection** - Automated exploit validation system
+5. **Reporting** - VXDF format generation and export
 
 ![VXDF Architecture](docs/screenshots/architecture.png)
 
+---
 
+## 🧩 Key Components
+
+### Backend Services
+- **Validation Engine**: Core business logic for vulnerability verification
+- **Flask API**: REST endpoints for frontend integration
+- **SQLAlchemy ORM**: Database management with SQLite
+- **Parser System**: Modular input processors (SARIF, DAST, CycloneDX)
+- **Validator Plugins**: Vulnerability-specific validation logic
+- **Docker Integration**: Isolated validation environments
+
+### Frontend Features
+- **React/TypeScript**: Modern UI with Vite build system
+- **Dynamic Dashboard**: Real-time validation statistics
+- **Data Flow Visualization**: Interactive vulnerability tracing
+- **Evidence Viewer**: Validation proof inspection
+- **Report Generator**: VXDF format export
 
 ---
 
-## ✨ Key Features
-- **Dynamic, API-driven UI**: All data, navigation, and alerts are fetched from APIs or config files.
-- **Modern Dashboard**: Beautiful charts, animated stats, and glassmorphism design.
-- **Modular Sidebar**: Navigation is fully dynamic and easily configurable.
-- **File Upload & Parsing**: Supports SARIF, JSON, CSV, and more.
-- **Automated Validation**: Exploitability checks for each finding.
-- **Standardized Reporting**: VXDF format for easy integration and compliance.
-- **Responsive & Accessible**: Works on all modern browsers and devices.
+## 🔄 Validation Workflow
+
+1. **Input Ingestion**
+   - Accepts SARIF, DAST JSON, CycloneDX SBOMs
+   - Normalizes findings to common data model
+
+2. **Vulnerability Processing**
+   - Filters by severity/vulnerability type
+   - Enriches with CWE/CVSS data
+
+3. **Automated Validation**
+   - Docker-based isolated testing
+   - Evidence collection (HTTP requests, stack traces)
+   - Exploitability confirmation
+
+4. **Reporting**
+   - Generates VXDF-standard reports
+   - Maintains audit trail of validation attempts
+
+---
+
+## 🗃️ Data Model
+
+Key entities in the VXDF system:
+
+```typescript
+interface Vulnerability {
+  id: string;
+  source: CodeLocation;
+  sink: CodeLocation;
+  dataFlow: DataFlowStep[];
+  evidence: EvidenceItem[];
+  validationStatus: 'Confirmed' | 'False Positive' | 'Inconclusive';
+}
+
+interface DataFlowStep {
+  filePath: string;
+  lineNumber: number;
+  codeSnippet: string;
+  variables: string[];
+}
+
+interface EvidenceItem {
+  type: 'http' | 'code' | 'log';
+  content: string;
+  validationResult: string;
+}
+```
 
 ---
 
