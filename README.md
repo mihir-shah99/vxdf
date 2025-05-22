@@ -43,9 +43,9 @@ VXDF follows a modular microservices architecture with clear separation between:
 
 1. **Validation Engine** - Core vulnerability verification logic
 2. **API Layer** - RESTful interface for frontend integration
-3. **Data Processing** - SARIF/DAST/CycloneDX parsing pipeline
+3. **Data Processing** - SARIF/DAST/CycloneDX parsing pipeline to transform inputs into the canonical VXDF Pydantic models
 4. **Evidence Collection** - Automated exploit validation system
-5. **Reporting** - VXDF format generation and export
+5. **Reporting** - Serialization of the `VXDFModel` Pydantic object to the standard VXDF format for export
 
 ![VXDF Architecture](docs/screenshots/architecture.png)
 
@@ -57,7 +57,7 @@ VXDF follows a modular microservices architecture with clear separation between:
 - **Validation Engine**: Core business logic for vulnerability verification
 - **Flask API**: REST endpoints for frontend integration
 - **SQLAlchemy ORM**: Database management with SQLite
-- **Parser System**: Modular input processors (SARIF, DAST, CycloneDX)
+- **Parser System**: Modular input processors (SARIF, DAST, CycloneDX) that normalize findings to the VXDF Pydantic models
 - **Validator Plugins**: Vulnerability-specific validation logic
 - **Docker Integration**: Isolated validation environments
 
@@ -66,7 +66,7 @@ VXDF follows a modular microservices architecture with clear separation between:
 - **Dynamic Dashboard**: Real-time validation statistics
 - **Data Flow Visualization**: Interactive vulnerability tracing
 - **Evidence Viewer**: Validation proof inspection
-- **Report Generator**: VXDF format export
+- **Report Generator**: Export of findings in the standard VXDF format (JSON)
 
 ---
 
@@ -74,7 +74,7 @@ VXDF follows a modular microservices architecture with clear separation between:
 
 1. **Input Ingestion**
    - Accepts SARIF, DAST JSON, CycloneDX SBOMs
-   - Normalizes findings to common data model
+   - Normalizes findings to the common VXDF data model (defined by Pydantic models in `api/models/vxdf.py`)
 
 2. **Vulnerability Processing**
    - Filters by severity/vulnerability type
@@ -86,38 +86,29 @@ VXDF follows a modular microservices architecture with clear separation between:
    - Exploitability confirmation
 
 4. **Reporting**
-   - Generates VXDF-standard reports
+   - Generates VXDF-standard reports by serializing the populated `VXDFModel` Pydantic object
    - Maintains audit trail of validation attempts
 
 ---
 
 ## 🗃️ Data Model
 
-Key entities in the VXDF system:
+The canonical data model for VXDF is defined using Pydantic in Python, located in `api/models/vxdf.py`. This provides a structured and validated way to represent security findings according to the VXDF specification.
 
-```typescript
-interface Vulnerability {
-  id: string;
-  source: CodeLocation;
-  sink: CodeLocation;
-  dataFlow: DataFlowStep[];
-  evidence: EvidenceItem[];
-  validationStatus: 'Confirmed' | 'False Positive' | 'Inconclusive';
-}
+The root model is `VXDFModel`, which encapsulates the entire VXDF document. Key nested models include:
 
-interface DataFlowStep {
-  filePath: string;
-  lineNumber: number;
-  codeSnippet: string;
-  variables: string[];
-}
+- **`VulnerabilityDetailsModel`**: Describes a single vulnerability, including its ID, title, description, severity, affected components, exploit flows, and evidence.
+- **`EvidenceModel`**: Details a piece of evidence, specifying its type (e.g., HTTP request, code snippet, screenshot) and the associated structured data.
+- **`LocationModel`**: Specifies a precise location relevant to a vulnerability (e.g., source code location, web endpoint).
+- **`SeverityModel`**: Captures severity information, including qualitative levels and quantitative scores like CVSS.
+- **`ExploitFlowModel`**: Describes a sequence of steps an attacker might take.
 
-interface EvidenceItem {
-  type: 'http' | 'code' | 'log';
-  content: string;
-  validationResult: string;
-}
-```
+These Pydantic models are the source of truth for the VXDF data structure and are used to generate the normative JSON schema.
+
+For the complete normative JSON schema, refer to [docs/normative-schema.json](docs/normative-schema.json).
+The detailed specification document can be found in [docs/Validated Exploitable Data Flow (VXDF) Format.md](docs/Validated Exploitable Data Flow (VXDF) Format.md).
+
+(Previously, this section showed an illustrative TypeScript interface, which is now superseded by the Pydantic models and the normative JSON schema.)
 
 ---
 
@@ -127,14 +118,14 @@ interface EvidenceItem {
 vxdf/
 ├── api/                # Backend API and core functionality
 │   ├── core/           # Core validation engine
-│   ├── models/         # Data models
+│   ├── models/         # VXDF Pydantic models (api/models/vxdf.py defines the canonical schema)
 │   ├── parsers/        # Input format parsers
 │   └── validators/     # Vulnerability validators
 ├── config/             # Configuration files
 │   └── config.json     # Main application configuration
 ├── data/               # Database and data files
 │   └── vxdf_validate.db # SQLite database
-├── docs/               # Documentation
+├── docs/               # Documentation, including the normative JSON schema (docs/normative-schema.json) and specification MD
 ├── frontend/           # React/TypeScript frontend
 │   ├── src/            # Frontend source code
 │   ├── package.json    # NPM dependencies
@@ -160,6 +151,8 @@ vxdf/
 ### Key Configuration Files
 
 - `api/requirements.txt` - Backend Python dependencies
+- `api/models/vxdf.py` - Canonical Pydantic models for the VXDF schema.
+- `docs/normative-schema.json` - The normative JSON schema generated from Pydantic models.
 - `frontend/vite.config.ts` - Frontend configuration, including API proxy settings
 - `config/config.json` - Application configuration
 - `data/vxdf_validate.db` - SQLite database (created on first run)

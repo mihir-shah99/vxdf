@@ -2,11 +2,18 @@
 Models for representing VXDF (Validated Exploitable Data Flow) data structures.
 """
 from enum import Enum
-from typing import List, Optional, Dict, Any, Union, Literal
+from typing import List, Optional, Dict, Any, Union, Literal, Set
 from uuid import UUID, uuid4 # Added uuid4 for later use
 from datetime import datetime # Added datetime for later use
 from pydantic import BaseModel, Field, HttpUrl, validator, root_validator, constr, conint, confloat # HttpUrl, validator, root_validator, constr, conint, confloat might be used later
 from ipaddress import IPv4Address, IPv6Address # Added for IPv4Address and IPv6Address
+
+class GeneratorToolInfo(BaseModel):
+    """Information about the tool that generated this VXDF document."""
+    name: str = Field(..., description="The name of the tool that generated the VXDF document.")
+    version: Optional[str] = Field(None, description="The version of the generating tool.")
+    # Per schema, additionalProperties is allowed for generatorToolInfo
+    model_config = {"extra": "allow"}
 
 class SeverityLevelEnum(str, Enum):
     """
@@ -591,8 +598,22 @@ class TraceStepModel(BaseModel):
     location: LocationModel
     description: str
     stepType: Optional[StepTypeEnum] = None
-    evidenceRefs: Optional[List[UUID]] = Field(default_factory=list, unique_items=True)
+    evidenceRefs: Optional[Set[UUID]] = Field(default_factory=set)
     customProperties: Optional[Dict[str, Any]] = None
+
+    model_config = {"extra": "forbid"}
+
+class AffectedComponentModel(BaseModel):
+    """Details about a software or hardware component affected by or related to the vulnerability."""
+    name: str = Field(..., description="The name of the affected component.")
+    componentType: AffectedComponentTypeEnum = Field(..., description="The type or category of the component.")
+    version: Optional[str] = Field(None, description="The version of the component, if known.")
+    purl: Optional[str] = Field(None, description="Package URL (PURL) for the component.")
+    cpe: Optional[str] = Field(None, description="Common Platform Enumeration (CPE) for the component.")
+    description: Optional[str] = Field(None, description="A brief description of the component and its relevance.")
+    locations: Optional[List[LocationModel]] = Field(default_factory=list, description="Specific locations within this component that are relevant (e.g., vulnerable file paths, affected configurations).")
+    evidenceRefs: Optional[Set[UUID]] = Field(default_factory=set, description="List of UUIDs referencing evidence items related to this component's involvement.")
+    customProperties: Optional[Dict[str, Any]] = Field(None, description="A key-value map for additional custom information about this affected component.")
 
     model_config = {"extra": "forbid"}
 
@@ -927,6 +948,45 @@ class ExternalInteractionProofDataModel(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class OtherEvidenceDataModel(BaseModel):
+    """Structured data for evidenceType: OTHER_EVIDENCE."""
+    dataTypeDescription: str = Field(..., description="A description of the type of data contained in dataContent (e.g., 'Raw hex dump', 'Custom binary format log').")
+    dataContent: str = Field(..., description="The actual data content for this evidence.")
+    encodingFormat: Optional[OtherEvidenceEncodingFormatEnum] = Field(OtherEvidenceEncodingFormatEnum.PLAINTEXT, description="The encoding format of dataContent, if not plaintext.")
+
+    model_config = {"extra": "allow"} # As per schema additionalProperties: true
+
+
+class ExfiltratedDataSampleDataModel(BaseModel):
+    """Structured data for evidenceType: EXFILTRATED_DATA_SAMPLE."""
+    dataDescription: str = Field(..., description="Description of the data that was exfiltrated (e.g., 'User credentials', 'Session cookie', 'PII records sample').")
+    dataSample: str = Field(..., description="A sample of the exfiltrated data. May be truncated, redacted, or a representation if sensitive.")
+    exfiltrationMethod: Optional[str] = Field(None, description="Method or channel used for data exfiltration (e.g., 'HTTP POST to attacker server', 'DNS tunneling').")
+    destinationIndicator: Optional[str] = Field(None, description="Indicator of the destination where data was sent (e.g., attacker-controlled IP, domain, URL).")
+
+    model_config = {"extra": "forbid"}
+
+
+class TestPayloadDataModel(BaseModel):
+    """Structured data for evidenceType: TEST_PAYLOAD_USED."""
+    payloadContent: str = Field(..., description="The actual content of the test payload.")
+    payloadDescription: Optional[str] = Field(None, description="A brief description of the payload, its purpose, or how it was crafted.")
+    payloadEncoding: Optional[PayloadEncodingEnum] = Field(PayloadEncodingEnum.PLAINTEXT, description="The encoding format of the payloadContent, if not plaintext.")
+    targetParameterOrLocation: Optional[str] = Field(None, description="Specifies where the payload was injected or used (e.g., URL parameter name, HTTP header, file path).")
+
+    model_config = {"extra": "forbid"}
+
+
+class ManualVerificationDataModel(BaseModel):
+    """Structured data for evidenceType: MANUAL_VERIFICATION_NOTES."""
+    verificationSteps: str = Field(..., description="Detailed steps taken by the human verifier.")
+    observedOutcome: str = Field(..., description="The outcome observed by the verifier after performing the steps.")
+    testerName: Optional[str] = Field(None, description="Name or identifier of the person who performed the manual verification.")
+    toolsUsed: Optional[List[str]] = Field(default_factory=list, description="A list of tools or software used during manual verification.")
+
+    model_config = {"extra": "forbid"}
+
+
 EvidenceDataVariantUnion = Union[
     HttpRequestLogDataModel,
     HttpResponseLogDataModel,
@@ -937,8 +997,8 @@ EvidenceDataVariantUnion = Union[
     ExceptionTraceDataModel,
     ScreenshotUrlDataModel,
     ScreenshotEmbeddedDataModel,
-    ManualVerificationDataModel,
     TestPayloadDataModel,
+    ManualVerificationDataModel,
     EnvironmentConfigDataModel,
     NetworkCaptureSummaryDataModel,
     StaticAnalysisPathDataModel,
@@ -1021,14 +1081,14 @@ class ValidationEngineModel(BaseModel):
 
 class ValidationItemModel(BaseModel):
     """Describes a specific validation event or check performed by a human or an automated tool."""
-    validationId: Optional[UUID] = Field(None, default_factory=uuid4, description="Optional unique ID for this validation item.")
+    validationId: Optional[UUID] = Field(default_factory=uuid4, description="Optional unique ID for this validation item.")
     validatorName: str = Field(..., description="Name or identifier of the validator (e.g., tester name, automated tool name).")
     engineInfo: Optional[ValidationEngineModel] = Field(None, description="Details of the validation engine used, if applicable.")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of when the validation was performed. Assumed to be UTC.")
     method: ValidationMethodEnum = Field(..., description="The method used for this validation step.")
     conclusion: str = Field(..., description="The outcome or conclusion of this validation step (e.g., 'Vulnerability Confirmed', 'False Positive').")
     description: Optional[str] = Field(None, description="Detailed notes or observations from the validator.")
-    evidenceRefs: Optional[List[UUID]] = Field(default_factory=list, unique_items=True, description="List of UUIDs referencing evidence items supporting this validation.")
+    evidenceRefs: Optional[Set[UUID]] = Field(default_factory=set, description="List of UUIDs referencing evidence items supporting this validation.")
     reproducibilityNotes: Optional[str] = Field(None, description="Notes on how to reproduce this validation step or its findings.")
     customProperties: Optional[Dict[str, Any]] = Field(None, description="A key-value map for additional custom information about this validation item.")
 
@@ -1037,7 +1097,7 @@ class ValidationItemModel(BaseModel):
 
 class ExploitFlowModel(BaseModel):
     """Describes a validated sequence of steps that demonstrate how a vulnerability can be exploited or how sensitive data flows through a system."""
-    flowId: Optional[UUID] = Field(None, default_factory=uuid4, description="Optional unique ID for this exploit flow.")
+    flowId: Optional[UUID] = Field(default_factory=uuid4, description="Optional unique ID for this exploit flow.")
     description: str = Field(..., description="A concise description summarizing this specific exploit flow or data path.")
     trace: List[TraceStepModel] = Field(..., min_length=1, description="An ordered list of steps detailing the exploit flow or data path.")
     status: StatusEnum = Field(..., description="The current status of this exploit flow (e.g., Open, Remediated).")
@@ -1054,7 +1114,7 @@ class ExploitFlowModel(BaseModel):
 class VulnerabilityDetailsModel(BaseModel):
     """Contains all detailed information about a single, validated vulnerability finding."""
     vulnerabilityId: str = Field(..., description="A unique identifier for this vulnerability finding (e.g., internal tracking ID).")
-    alternateIds: Optional[List[str]] = Field(default_factory=list, description="A list of alternative identifiers (e.g., CVE, GHSA, bug tracker IDs).", unique_items=True)
+    alternateIds: Optional[Set[str]] = Field(default_factory=set, description="A list of alternative identifiers (e.g., CVE, GHSA, bug tracker IDs).")
     title: str = Field(..., description="A concise, human-readable title for the vulnerability.")
     description: str = Field(..., description="A detailed description of the vulnerability, its nature, and potential impact.")
     discoveryDate: datetime = Field(default_factory=datetime.utcnow, description="The date and time when the vulnerability was first discovered or reported. Assumed to be UTC.")
@@ -1063,10 +1123,10 @@ class VulnerabilityDetailsModel(BaseModel):
     severity: SeverityModel = Field(..., description="The overall severity assessment for this vulnerability.")
     exploitFlows: List[ExploitFlowModel] = Field(..., min_length=1, description="One or more detailed exploit flows or data paths demonstrating the vulnerability.")
     affectedApplications: Optional[List[ApplicationInfo]] = Field(default_factory=list, description="Information about the applications, systems, or components affected by this vulnerability.")
-    tags: Optional[List[str]] = Field(default_factory=list, unique_items=True, description="A list of keywords or tags for categorizing or filtering the vulnerability.")
-    cwes: Optional[List[conint(gt=0)]] = Field(default_factory=list, unique_items=True, description="A list of Common Weakness Enumeration (CWE) identifiers relevant to this vulnerability (e.g., [79, 89]).")
-    owaspTopTenCategories: Optional[List[str]] = Field(default_factory=list, unique_items=True, description="Relevant OWASP Top Ten categories (e.g., 'A01:2021-Broken Access Control').")
-    references: Optional[List[HttpUrl]] = Field(default_factory=list, unique_items=True, description="A list of URLs to external advisories, write-ups, or other relevant resources.")
+    tags: Optional[Set[str]] = Field(default_factory=set, description="A list of keywords or tags for categorizing or filtering the vulnerability.")
+    cwes: Optional[Set[conint(gt=0)]] = Field(default_factory=set, description="A list of Common Weakness Enumeration (CWE) identifiers relevant to this vulnerability (e.g., [79, 89]).")
+    owaspTopTenCategories: Optional[Set[str]] = Field(default_factory=set, description="Relevant OWASP Top Ten categories (e.g., 'A01:2021-Broken Access Control').")
+    references: Optional[Set[HttpUrl]] = Field(default_factory=set, description="A list of URLs to external advisories, write-ups, or other relevant resources.")
     remediationInfo: Optional[RemediationModel] = Field(None, description="Detailed information and recommendations for remediating the vulnerability.")
     customProperties: Optional[Dict[str, Any]] = Field(None, description="A key-value map for additional custom information about this vulnerability.")
 

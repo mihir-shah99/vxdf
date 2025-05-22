@@ -1,0 +1,4972 @@
+{
+  "$defs": {
+    "AffectedComponentModel": {
+      "additionalProperties": false,
+      "description": "Details about a software or hardware component affected by or related to the vulnerability.",
+      "properties": {
+        "name": {
+          "description": "The name of the affected component.",
+          "title": "Name",
+          "type": "string"
+        },
+        "componentType": {
+          "$ref": "#/$defs/AffectedComponentTypeEnum",
+          "description": "The type or category of the component."
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the component, if known.",
+          "title": "Version"
+        },
+        "purl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package URL (PURL) for the component.",
+          "title": "Purl"
+        },
+        "cpe": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Common Platform Enumeration (CPE) for the component.",
+          "title": "Cpe"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A brief description of the component and its relevance.",
+          "title": "Description"
+        },
+        "locations": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/LocationModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Specific locations within this component that are relevant (e.g., vulnerable file paths, affected configurations).",
+          "title": "Locations"
+        },
+        "evidenceRefs": {
+          "anyOf": [
+            {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "List of UUIDs referencing evidence items related to this component's involvement.",
+          "title": "Evidencerefs"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A key-value map for additional custom information about this affected component.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "name",
+        "componentType"
+      ],
+      "title": "AffectedComponentModel",
+      "type": "object"
+    },
+    "AffectedComponentTypeEnum": {
+      "description": "The general type or category of the component.\nDefinitions based on Appendix N: `AffectedComponent.componentType` - Definitions.",
+      "enum": [
+        "SOFTWARE_LIBRARY",
+        "APPLICATION_MODULE",
+        "EXECUTABLE_FILE",
+        "OPERATING_SYSTEM",
+        "HARDWARE_DEVICE",
+        "FIRMWARE",
+        "CONTAINER_IMAGE",
+        "CONFIGURATION_FILE",
+        "SERVICE_ENDPOINT",
+        "NETWORK_INFRASTRUCTURE_DEVICE",
+        "CLOUD_SERVICE_COMPONENT",
+        "DATA_STORE_INSTANCE",
+        "PROTOCOL_SPECIFICATION",
+        "OTHER_COMPONENT"
+      ],
+      "title": "AffectedComponentTypeEnum",
+      "type": "string"
+    },
+    "ApplicationInfo": {
+      "additionalProperties": true,
+      "description": "Information about the application, system, or component that was the target of the assessment\nand to which the findings apply.",
+      "properties": {
+        "name": {
+          "description": "The primary name of the application or target.",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the application or target.",
+          "title": "Version"
+        },
+        "repositoryUrl": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "URL of the source code repository for the application.",
+          "title": "Repositoryurl"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The environment in which the assessment was performed or to which it applies (e.g., 'production', 'staging', 'test', 'development').",
+          "title": "Environment"
+        },
+        "purl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package URL (PURL) identifying the overall application or target.",
+          "title": "Purl"
+        },
+        "cpe": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Common Platform Enumeration (CPE) for the overall application or target.",
+          "title": "Cpe"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A key-value map for additional custom information about the application or target.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ApplicationInfo",
+      "type": "object"
+    },
+    "CloudPlatformEnum": {
+      "enum": [
+        "AWS",
+        "Azure",
+        "GCP",
+        "OCI",
+        "Other"
+      ],
+      "title": "CloudPlatformEnum",
+      "type": "string"
+    },
+    "CodeSnippetDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: CODE_SNIPPET_SOURCE, CODE_SNIPPET_SINK, or CODE_SNIPPET_CONTEXT.",
+      "properties": {
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Language"
+        },
+        "filePath": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Filepath"
+        },
+        "startLine": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startline"
+        },
+        "endLine": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endline"
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "CodeSnippetDataModel",
+      "type": "object"
+    },
+    "ConfigFileSnippetDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: CONFIGURATION_FILE_SNIPPET.",
+      "properties": {
+        "filePath": {
+          "title": "Filepath",
+          "type": "string"
+        },
+        "snippet": {
+          "title": "Snippet",
+          "type": "string"
+        },
+        "settingName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Settingname"
+        },
+        "interpretation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Interpretation"
+        }
+      },
+      "required": [
+        "filePath",
+        "snippet"
+      ],
+      "title": "ConfigFileSnippetDataModel",
+      "type": "object"
+    },
+    "CustomScoreModel": {
+      "additionalProperties": false,
+      "description": "Allows for representing scores from other scoring systems.",
+      "properties": {
+        "systemName": {
+          "title": "Systemname",
+          "type": "string"
+        },
+        "scoreValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Scorevalue"
+        },
+        "scoreDescription": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scoredescription"
+        }
+      },
+      "required": [
+        "systemName",
+        "scoreValue"
+      ],
+      "title": "CustomScoreModel",
+      "type": "object"
+    },
+    "CvssV3_1Model": {
+      "additionalProperties": false,
+      "description": "Common Vulnerability Scoring System v3.1 details.",
+      "properties": {
+        "version": {
+          "const": "3.1",
+          "description": "CVSS version, MUST be 3.1",
+          "title": "Version",
+          "type": "string"
+        },
+        "vectorString": {
+          "description": "The full CVSS v3.1 vector string.",
+          "pattern": "^CVSS:3\\.1/(AV:[NALP]/AC:[LH]/PR:[NLH]/UI:[NR]/S:[UC]/C:[NLH]/I:[NLH]/A:[NLH])((/[A-Za-z_]+:[A-Za-z_]+)*)$",
+          "title": "Vectorstring",
+          "type": "string"
+        },
+        "baseScore": {
+          "description": "The CVSS Base Score.",
+          "maximum": 10.0,
+          "minimum": 0.0,
+          "title": "Basescore",
+          "type": "number"
+        },
+        "baseMetrics": {
+          "$ref": "#/$defs/CvssV3_1_BaseMetricsModel"
+        },
+        "temporalScore": {
+          "anyOf": [
+            {
+              "maximum": 10.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The CVSS Temporal Score.",
+          "title": "Temporalscore"
+        },
+        "temporalMetrics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_TemporalMetricsModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CVSS v3.1 Temporal Metric Group."
+        },
+        "environmentalScore": {
+          "anyOf": [
+            {
+              "maximum": 10.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The CVSS Environmental Score.",
+          "title": "Environmentalscore"
+        },
+        "environmentalMetrics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_EnvironmentalMetricsModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CVSS v3.1 Environmental Metric Group."
+        }
+      },
+      "required": [
+        "version",
+        "vectorString",
+        "baseScore",
+        "baseMetrics"
+      ],
+      "title": "CvssV3_1Model",
+      "type": "object"
+    },
+    "CvssV3_1_AttackComplexityEnum": {
+      "enum": [
+        "LOW",
+        "HIGH"
+      ],
+      "title": "CvssV3_1_AttackComplexityEnum",
+      "type": "string"
+    },
+    "CvssV3_1_AttackVectorEnum": {
+      "enum": [
+        "NETWORK",
+        "ADJACENT_NETWORK",
+        "LOCAL",
+        "PHYSICAL"
+      ],
+      "title": "CvssV3_1_AttackVectorEnum",
+      "type": "string"
+    },
+    "CvssV3_1_BaseMetricsModel": {
+      "description": "CVSS v3.1 Base Metric Group.",
+      "properties": {
+        "attackVector": {
+          "$ref": "#/$defs/CvssV3_1_AttackVectorEnum"
+        },
+        "attackComplexity": {
+          "$ref": "#/$defs/CvssV3_1_AttackComplexityEnum"
+        },
+        "privilegesRequired": {
+          "$ref": "#/$defs/CvssV3_1_PrivilegesRequiredEnum"
+        },
+        "userInteraction": {
+          "$ref": "#/$defs/CvssV3_1_UserInteractionEnum"
+        },
+        "scope": {
+          "$ref": "#/$defs/CvssV3_1_ScopeEnum"
+        },
+        "confidentialityImpact": {
+          "$ref": "#/$defs/CvssV3_1_ImpactEnum"
+        },
+        "integrityImpact": {
+          "$ref": "#/$defs/CvssV3_1_ImpactEnum"
+        },
+        "availabilityImpact": {
+          "$ref": "#/$defs/CvssV3_1_ImpactEnum"
+        }
+      },
+      "required": [
+        "attackVector",
+        "attackComplexity",
+        "privilegesRequired",
+        "userInteraction",
+        "scope",
+        "confidentialityImpact",
+        "integrityImpact",
+        "availabilityImpact"
+      ],
+      "title": "CvssV3_1_BaseMetricsModel",
+      "type": "object"
+    },
+    "CvssV3_1_CIARequirementEnum": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV3_1_CIARequirementEnum",
+      "type": "string"
+    },
+    "CvssV3_1_EnvironmentalMetricsModel": {
+      "description": "CVSS v3.1 Environmental Metric Group.",
+      "properties": {
+        "confidentialityRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_CIARequirementEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "integrityRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_CIARequirementEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "availabilityRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_CIARequirementEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedAttackVector": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_AttackVectorEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedAttackComplexity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_AttackComplexityEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedPrivilegesRequired": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_PrivilegesRequiredEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedUserInteraction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_UserInteractionEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedScope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_ScopeEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedConfidentialityImpact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedIntegrityImpact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedAvailabilityImpact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "CvssV3_1_EnvironmentalMetricsModel",
+      "type": "object"
+    },
+    "CvssV3_1_ExploitCodeMaturityEnum": {
+      "enum": [
+        "UNPROVEN",
+        "PROOF_OF_CONCEPT",
+        "FUNCTIONAL",
+        "HIGH",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV3_1_ExploitCodeMaturityEnum",
+      "type": "string"
+    },
+    "CvssV3_1_ImpactEnum": {
+      "enum": [
+        "NONE",
+        "LOW",
+        "HIGH"
+      ],
+      "title": "CvssV3_1_ImpactEnum",
+      "type": "string"
+    },
+    "CvssV3_1_PrivilegesRequiredEnum": {
+      "enum": [
+        "NONE",
+        "LOW",
+        "HIGH"
+      ],
+      "title": "CvssV3_1_PrivilegesRequiredEnum",
+      "type": "string"
+    },
+    "CvssV3_1_RemediationLevelEnum": {
+      "enum": [
+        "OFFICIAL_FIX",
+        "TEMPORARY_FIX",
+        "WORKAROUND",
+        "UNAVAILABLE",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV3_1_RemediationLevelEnum",
+      "type": "string"
+    },
+    "CvssV3_1_ReportConfidenceEnum": {
+      "enum": [
+        "UNKNOWN",
+        "REASONABLE",
+        "CONFIRMED",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV3_1_ReportConfidenceEnum",
+      "type": "string"
+    },
+    "CvssV3_1_ScopeEnum": {
+      "enum": [
+        "UNCHANGED",
+        "CHANGED"
+      ],
+      "title": "CvssV3_1_ScopeEnum",
+      "type": "string"
+    },
+    "CvssV3_1_TemporalMetricsModel": {
+      "description": "CVSS v3.1 Temporal Metric Group.",
+      "properties": {
+        "exploitCodeMaturity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_ExploitCodeMaturityEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "remediationLevel": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_RemediationLevelEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "reportConfidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1_ReportConfidenceEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "CvssV3_1_TemporalMetricsModel",
+      "type": "object"
+    },
+    "CvssV3_1_UserInteractionEnum": {
+      "enum": [
+        "NONE",
+        "REQUIRED"
+      ],
+      "title": "CvssV3_1_UserInteractionEnum",
+      "type": "string"
+    },
+    "CvssV4_0Model": {
+      "additionalProperties": false,
+      "description": "Common Vulnerability Scoring System v4.0 details.",
+      "properties": {
+        "version": {
+          "const": "4.0",
+          "default": "4.0",
+          "title": "Version",
+          "type": "string"
+        },
+        "vectorString": {
+          "pattern": "^CVSS:4\\\\.0/AV:[NALP]/AC:[LH]/AT:[NP]/PR:[NLH]/UI:[NPA]/VC:[NLH]/VI:[NLH]/VA:[NLH]/SC:[NLH]/SI:[NLH]/SA:[NLH](?:/E:[APU])?(?:/CR:[LMH])?(?:/IR:[LMH])?(?:/AR:[LMH])?(?:/MAV:[NALP])?(?:/MAC:[LH])?(?:/MAT:[NP])?(?:/MPR:[NLH])?(?:/MUI:[NPA])?(?:/MVC:[NLH])?(?:/MVI:[NLH])?(?:/MVA:[NLH])?(?:/MSC:[NLH])?(?:/MSI:[NLH])?(?:/MSA:[NLH])?(?:/S:[NP])?(?:/AU:[YN])?(?:/R:[AIU])?(?:/V:[CD])?(?:/RE:[LMH])?(?:/U:(?:Clear|Green|Amber|Red))?(?:/[A-Za-z0-9_]+:[A-Za-z0-9_]+)*$",
+          "title": "Vectorstring",
+          "type": "string"
+        },
+        "baseScore": {
+          "maximum": 10.0,
+          "minimum": 0.0,
+          "title": "Basescore",
+          "type": "number"
+        },
+        "threatScore": {
+          "anyOf": [
+            {
+              "maximum": 10.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threatscore"
+        },
+        "environmentalScore": {
+          "anyOf": [
+            {
+              "maximum": 10.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Environmentalscore"
+        },
+        "baseMetrics": {
+          "$ref": "#/$defs/CvssV4_0_BaseMetricsModel"
+        },
+        "threatMetrics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ThreatMetricsModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "environmentalMetrics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_EnvironmentalMetricsModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "supplementalMetrics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_SupplementalMetricsModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "vectorString",
+        "baseScore",
+        "baseMetrics"
+      ],
+      "title": "CvssV4_0Model",
+      "type": "object"
+    },
+    "CvssV4_0_AttackComplexityEnum": {
+      "enum": [
+        "LOW",
+        "HIGH"
+      ],
+      "title": "CvssV4_0_AttackComplexityEnum",
+      "type": "string"
+    },
+    "CvssV4_0_AttackRequirementsEnum": {
+      "enum": [
+        "NONE",
+        "PRESENT"
+      ],
+      "title": "CvssV4_0_AttackRequirementsEnum",
+      "type": "string"
+    },
+    "CvssV4_0_AttackVectorEnum": {
+      "enum": [
+        "NETWORK",
+        "ADJACENT",
+        "LOCAL",
+        "PHYSICAL"
+      ],
+      "title": "CvssV4_0_AttackVectorEnum",
+      "type": "string"
+    },
+    "CvssV4_0_AutomatableEnum": {
+      "enum": [
+        "NO",
+        "YES",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_AutomatableEnum",
+      "type": "string"
+    },
+    "CvssV4_0_BaseMetricsModel": {
+      "description": "CVSS v4.0 Base (Exploitability and Impact) Metric Group.",
+      "properties": {
+        "attackVector": {
+          "$ref": "#/$defs/CvssV4_0_AttackVectorEnum"
+        },
+        "attackComplexity": {
+          "$ref": "#/$defs/CvssV4_0_AttackComplexityEnum"
+        },
+        "attackRequirements": {
+          "$ref": "#/$defs/CvssV4_0_AttackRequirementsEnum"
+        },
+        "privilegesRequired": {
+          "$ref": "#/$defs/CvssV4_0_PrivilegesRequiredEnum"
+        },
+        "userInteraction": {
+          "$ref": "#/$defs/CvssV4_0_UserInteractionEnum"
+        },
+        "vulnerableSystemConfidentiality": {
+          "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+        },
+        "vulnerableSystemIntegrity": {
+          "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+        },
+        "vulnerableSystemAvailability": {
+          "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+        }
+      },
+      "required": [
+        "attackVector",
+        "attackComplexity",
+        "attackRequirements",
+        "privilegesRequired",
+        "userInteraction",
+        "vulnerableSystemConfidentiality",
+        "vulnerableSystemIntegrity",
+        "vulnerableSystemAvailability"
+      ],
+      "title": "CvssV4_0_BaseMetricsModel",
+      "type": "object"
+    },
+    "CvssV4_0_CIARequirementEnum": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_CIARequirementEnum",
+      "type": "string"
+    },
+    "CvssV4_0_EnvironmentalMetricsModel": {
+      "description": "CVSS v4.0 Environmental Metric Group.",
+      "properties": {
+        "confidentialityRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_CIARequirementEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "integrityRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_CIARequirementEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "availabilityRequirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_CIARequirementEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedAttackVector": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_AttackVectorEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedAttackComplexity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_AttackComplexityEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedAttackRequirements": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_AttackRequirementsEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedPrivilegesRequired": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_PrivilegesRequiredEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedUserInteraction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_UserInteractionEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedVulnerableSystemConfidentiality": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedVulnerableSystemIntegrity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedVulnerableSystemAvailability": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedSubsequentSystemConfidentiality": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedSubsequentSystemIntegrity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "modifiedSubsequentSystemAvailability": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ImpactEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "CvssV4_0_EnvironmentalMetricsModel",
+      "type": "object"
+    },
+    "CvssV4_0_ExploitMaturityEnum": {
+      "enum": [
+        "ATTACKED",
+        "PROOF_OF_CONCEPT",
+        "UNREPORTED",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_ExploitMaturityEnum",
+      "type": "string"
+    },
+    "CvssV4_0_ImpactEnum": {
+      "enum": [
+        "NONE",
+        "LOW",
+        "HIGH"
+      ],
+      "title": "CvssV4_0_ImpactEnum",
+      "type": "string"
+    },
+    "CvssV4_0_PrivilegesRequiredEnum": {
+      "enum": [
+        "NONE",
+        "LOW",
+        "HIGH"
+      ],
+      "title": "CvssV4_0_PrivilegesRequiredEnum",
+      "type": "string"
+    },
+    "CvssV4_0_ProviderUrgencyEnum": {
+      "enum": [
+        "CLEAR",
+        "GREEN",
+        "AMBER",
+        "RED",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_ProviderUrgencyEnum",
+      "type": "string"
+    },
+    "CvssV4_0_RecoveryEnum": {
+      "enum": [
+        "AUTOMATIC",
+        "USER",
+        "IRRECOVERABLE",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_RecoveryEnum",
+      "type": "string"
+    },
+    "CvssV4_0_SafetyEnum": {
+      "enum": [
+        "NEGLIGIBLE",
+        "PRESENT",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_SafetyEnum",
+      "type": "string"
+    },
+    "CvssV4_0_SupplementalMetricsModel": {
+      "additionalProperties": false,
+      "properties": {
+        "S": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_SafetyEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "AU": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_AutomatableEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "R": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_RecoveryEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "V": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ValueDensityEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "RE": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_VulnerabilityResponseEffortEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "U": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ProviderUrgencyEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "CvssV4_0_SupplementalMetricsModel",
+      "type": "object"
+    },
+    "CvssV4_0_ThreatMetricsModel": {
+      "description": "CVSS v4.0 Threat Metric Group.",
+      "properties": {
+        "exploitMaturity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0_ExploitMaturityEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "CvssV4_0_ThreatMetricsModel",
+      "type": "object"
+    },
+    "CvssV4_0_UserInteractionEnum": {
+      "enum": [
+        "NONE",
+        "PASSIVE",
+        "ACTIVE"
+      ],
+      "title": "CvssV4_0_UserInteractionEnum",
+      "type": "string"
+    },
+    "CvssV4_0_ValueDensityEnum": {
+      "enum": [
+        "DIFFUSE",
+        "CONCENTRATED",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_ValueDensityEnum",
+      "type": "string"
+    },
+    "CvssV4_0_VulnerabilityResponseEffortEnum": {
+      "enum": [
+        "LOW",
+        "MODERATE",
+        "HIGH",
+        "NOT_DEFINED"
+      ],
+      "title": "CvssV4_0_VulnerabilityResponseEffortEnum",
+      "type": "string"
+    },
+    "DbStateChangeDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: DATABASE_STATE_CHANGE_PROOF.",
+      "properties": {
+        "targetObjectDescription": {
+          "title": "Targetobjectdescription",
+          "type": "string"
+        },
+        "stateAfterExploit": {
+          "title": "Stateafterexploit",
+          "type": "string"
+        },
+        "databaseType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Databasetype"
+        },
+        "stateBeforeExploit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Statebeforeexploit"
+        },
+        "actionTriggeringChange": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actiontriggeringchange"
+        },
+        "queryUsedForVerification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Queryusedforverification"
+        }
+      },
+      "required": [
+        "targetObjectDescription",
+        "stateAfterExploit"
+      ],
+      "title": "DbStateChangeDataModel",
+      "type": "object"
+    },
+    "DebuggerOutputDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: RUNTIME_DEBUGGER_OUTPUT.",
+      "properties": {
+        "output": {
+          "title": "Output",
+          "type": "string"
+        },
+        "debuggerName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Debuggername"
+        },
+        "timestampInDebugger": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestampindebugger"
+        },
+        "commandExecuted": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commandexecuted"
+        },
+        "callStack": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Callstack"
+        },
+        "variableStates": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/VariableStateModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Variablestates"
+        }
+      },
+      "required": [
+        "output"
+      ],
+      "title": "DebuggerOutputDataModel",
+      "type": "object"
+    },
+    "DifferentialAnalysisDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: DIFFERENTIAL_ANALYSIS_RESULT.",
+      "properties": {
+        "baselineRequestDescription": {
+          "title": "Baselinerequestdescription",
+          "type": "string"
+        },
+        "baselineResponseOrOutcomeSummary": {
+          "title": "Baselineresponseoroutcomesummary",
+          "type": "string"
+        },
+        "modifiedRequestOrActionDescription": {
+          "title": "Modifiedrequestoractiondescription",
+          "type": "string"
+        },
+        "modifiedResponseOrOutcomeSummary": {
+          "title": "Modifiedresponseoroutcomesummary",
+          "type": "string"
+        },
+        "analysisOfDifference": {
+          "title": "Analysisofdifference",
+          "type": "string"
+        }
+      },
+      "required": [
+        "baselineRequestDescription",
+        "baselineResponseOrOutcomeSummary",
+        "modifiedRequestOrActionDescription",
+        "modifiedResponseOrOutcomeSummary",
+        "analysisOfDifference"
+      ],
+      "title": "DifferentialAnalysisDataModel",
+      "type": "object"
+    },
+    "EnvironmentConfigDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: ENVIRONMENT_CONFIGURATION_DETAILS.",
+      "properties": {
+        "operatingSystem": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operatingsystem"
+        },
+        "softwareStack": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/SoftwareStackItemModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Softwarestack"
+        },
+        "networkConfiguration": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Networkconfiguration"
+        },
+        "hardwareDetails": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hardwaredetails"
+        },
+        "relevantSettings": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/RelevantSettingItemModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Relevantsettings"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "title": "EnvironmentConfigDataModel",
+      "type": "object"
+    },
+    "EvidenceModel": {
+      "additionalProperties": false,
+      "description": "A single piece of evidence supporting the vulnerability claim.",
+      "properties": {
+        "evidenceType": {
+          "$ref": "#/$defs/EvidenceTypeEnum"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpRequestLogDataModel"
+            },
+            {
+              "$ref": "#/$defs/HttpResponseLogDataModel"
+            },
+            {
+              "$ref": "#/$defs/CodeSnippetDataModel"
+            },
+            {
+              "$ref": "#/$defs/PocScriptDataModel"
+            },
+            {
+              "$ref": "#/$defs/RuntimeLogEntryDataModel"
+            },
+            {
+              "$ref": "#/$defs/DebuggerOutputDataModel"
+            },
+            {
+              "$ref": "#/$defs/ExceptionTraceDataModel"
+            },
+            {
+              "$ref": "#/$defs/ScreenshotUrlDataModel"
+            },
+            {
+              "$ref": "#/$defs/ScreenshotEmbeddedDataModel"
+            },
+            {
+              "$ref": "#/$defs/TestPayloadDataModel"
+            },
+            {
+              "$ref": "#/$defs/ManualVerificationDataModel"
+            },
+            {
+              "$ref": "#/$defs/EnvironmentConfigDataModel"
+            },
+            {
+              "$ref": "#/$defs/NetworkCaptureSummaryDataModel"
+            },
+            {
+              "$ref": "#/$defs/StaticAnalysisPathDataModel"
+            },
+            {
+              "$ref": "#/$defs/StaticAnalysisGraphDataModel"
+            },
+            {
+              "$ref": "#/$defs/ConfigFileSnippetDataModel"
+            },
+            {
+              "$ref": "#/$defs/ScaOutputDataModel"
+            },
+            {
+              "$ref": "#/$defs/MissingArtifactDataModel"
+            },
+            {
+              "$ref": "#/$defs/ObservedBehaviorDataModel"
+            },
+            {
+              "$ref": "#/$defs/DbStateChangeDataModel"
+            },
+            {
+              "$ref": "#/$defs/FsChangeDataModel"
+            },
+            {
+              "$ref": "#/$defs/ExfiltratedDataSampleDataModel"
+            },
+            {
+              "$ref": "#/$defs/SessionInfoLeakDataModel"
+            },
+            {
+              "$ref": "#/$defs/DifferentialAnalysisDataModel"
+            },
+            {
+              "$ref": "#/$defs/ToolSpecificOutputDataModel"
+            },
+            {
+              "$ref": "#/$defs/ExternalInteractionProofDataModel"
+            },
+            {
+              "$ref": "#/$defs/OtherEvidenceDataModel"
+            }
+          ],
+          "title": "Data"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "validationMethod": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValidationMethodEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "evidenceType",
+        "description",
+        "data"
+      ],
+      "title": "EvidenceModel",
+      "type": "object"
+    },
+    "EvidenceTypeEnum": {
+      "description": "The type of evidence provided. The structure of the 'data' field depends on this type.\nDefinitions based on Appendix P: `Evidence.evidenceType` - Definitions, Usage, and Data Structure Summaries.",
+      "enum": [
+        "HTTP_REQUEST_LOG",
+        "HTTP_RESPONSE_LOG",
+        "CODE_SNIPPET_SOURCE",
+        "CODE_SNIPPET_SINK",
+        "CODE_SNIPPET_CONTEXT",
+        "POC_SCRIPT",
+        "RUNTIME_APPLICATION_LOG_ENTRY",
+        "RUNTIME_SYSTEM_LOG_ENTRY",
+        "RUNTIME_WEB_SERVER_LOG_ENTRY",
+        "RUNTIME_DATABASE_LOG_ENTRY",
+        "RUNTIME_DEBUGGER_OUTPUT",
+        "RUNTIME_EXCEPTION_TRACE",
+        "SCREENSHOT_URL",
+        "SCREENSHOT_EMBEDDED_BASE64",
+        "MANUAL_VERIFICATION_NOTES",
+        "TEST_PAYLOAD_USED",
+        "ENVIRONMENT_CONFIGURATION_DETAILS",
+        "NETWORK_TRAFFIC_CAPTURE_SUMMARY",
+        "STATIC_ANALYSIS_DATA_FLOW_PATH",
+        "STATIC_ANALYSIS_CONTROL_FLOW_GRAPH",
+        "CONFIGURATION_FILE_SNIPPET",
+        "VULNERABLE_COMPONENT_SCAN_OUTPUT",
+        "MISSING_ARTIFACT_VERIFICATION",
+        "OBSERVED_BEHAVIORAL_CHANGE",
+        "DATABASE_STATE_CHANGE_PROOF",
+        "FILE_SYSTEM_CHANGE_PROOF",
+        "COMMAND_EXECUTION_OUTPUT",
+        "EXFILTRATED_DATA_SAMPLE",
+        "SESSION_INFORMATION_LEAK",
+        "EXTERNAL_INTERACTION_PROOF",
+        "DIFFERENTIAL_ANALYSIS_RESULT",
+        "TOOL_SPECIFIC_OUTPUT_LOG",
+        "OTHER_EVIDENCE"
+      ],
+      "title": "EvidenceTypeEnum",
+      "type": "string"
+    },
+    "ExceptionTraceDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: RUNTIME_EXCEPTION_TRACE.",
+      "properties": {
+        "exceptionClass": {
+          "title": "Exceptionclass",
+          "type": "string"
+        },
+        "stackTrace": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Stacktrace",
+          "type": "array"
+        },
+        "exceptionMessage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exceptionmessage"
+        },
+        "rootCause": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExceptionTraceDataModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "exceptionClass"
+      ],
+      "title": "ExceptionTraceDataModel",
+      "type": "object"
+    },
+    "ExfiltratedDataSampleDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: EXFILTRATED_DATA_SAMPLE.",
+      "properties": {
+        "dataDescription": {
+          "description": "Description of the data that was exfiltrated (e.g., 'User credentials', 'Session cookie', 'PII records sample').",
+          "title": "Datadescription",
+          "type": "string"
+        },
+        "dataSample": {
+          "description": "A sample of the exfiltrated data. May be truncated, redacted, or a representation if sensitive.",
+          "title": "Datasample",
+          "type": "string"
+        },
+        "exfiltrationMethod": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Method or channel used for data exfiltration (e.g., 'HTTP POST to attacker server', 'DNS tunneling').",
+          "title": "Exfiltrationmethod"
+        },
+        "destinationIndicator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indicator of the destination where data was sent (e.g., attacker-controlled IP, domain, URL).",
+          "title": "Destinationindicator"
+        }
+      },
+      "required": [
+        "dataDescription",
+        "dataSample"
+      ],
+      "title": "ExfiltratedDataSampleDataModel",
+      "type": "object"
+    },
+    "ExploitFlowModel": {
+      "additionalProperties": false,
+      "description": "Describes a validated sequence of steps that demonstrate how a vulnerability can be exploited or how sensitive data flows through a system.",
+      "properties": {
+        "flowId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional unique ID for this exploit flow.",
+          "title": "Flowid"
+        },
+        "description": {
+          "description": "A concise description summarizing this specific exploit flow or data path.",
+          "title": "Description",
+          "type": "string"
+        },
+        "trace": {
+          "description": "An ordered list of steps detailing the exploit flow or data path.",
+          "items": {
+            "$ref": "#/$defs/TraceStepModel"
+          },
+          "minItems": 1,
+          "title": "Trace",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/StatusEnum",
+          "description": "The current status of this exploit flow (e.g., Open, Remediated)."
+        },
+        "exploitabilityAssessment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExploitabilityAssessmentModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "An assessment of how easy or likely this specific flow is to be exploited."
+        },
+        "validationHistory": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ValidationItemModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A chronological record of validation attempts and findings related to this flow.",
+          "title": "Validationhistory"
+        },
+        "affectedComponents": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/AffectedComponentModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Components specifically involved or affected by this exploit flow.",
+          "title": "Affectedcomponents"
+        },
+        "remediationRecommendations": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Specific remediation advice or recommendations for this exploit flow.",
+          "title": "Remediationrecommendations"
+        },
+        "primaryExploitScenario": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Indicates if this flow is considered the primary or most representative exploit scenario among multiple flows for a single vulnerability.",
+          "title": "Primaryexploitscenario"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A key-value map for additional custom information about this exploit flow.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "description",
+        "trace",
+        "status"
+      ],
+      "title": "ExploitFlowModel",
+      "type": "object"
+    },
+    "ExploitabilityAssessmentLevelEnum": {
+      "enum": [
+        "EASY",
+        "MODERATE",
+        "DIFFICULT",
+        "THEORETICAL_BUT_PROVEN",
+        "NOT_ASSESSED"
+      ],
+      "title": "ExploitabilityAssessmentLevelEnum",
+      "type": "string"
+    },
+    "ExploitabilityAssessmentModel": {
+      "additionalProperties": false,
+      "description": "Assessment of how easy or likely the vulnerability is to be exploited.",
+      "properties": {
+        "level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExploitabilityAssessmentLevelEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "cvssExploitabilitySubscore": {
+          "anyOf": [
+            {
+              "maximum": 10.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cvssexploitabilitysubscore"
+        }
+      },
+      "title": "ExploitabilityAssessmentModel",
+      "type": "object"
+    },
+    "ExternalInteractionProofDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: EXTERNAL_INTERACTION_PROOF.",
+      "properties": {
+        "interactionType": {
+          "$ref": "#/$defs/ExternalInteractionProofTypeEnum",
+          "description": "The type of external interaction observed."
+        },
+        "description": {
+          "description": "Detailed description of the external interaction observed and its relevance as evidence.",
+          "title": "Description",
+          "type": "string"
+        },
+        "targetSystemDescription": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Description of the target system or service interacted with (e.g., 'Collaborator server', 'External DNS resolver').",
+          "title": "Targetsystemdescription"
+        },
+        "observedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the interaction was specifically observed (distinct from the overall evidence collection timestamp). Assumed to be UTC.",
+          "title": "Observedat"
+        },
+        "sourceIdentifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Identifier for the source of the interaction (e.g., IP address, hostname from which the interaction originated).",
+          "title": "Sourceidentifier"
+        },
+        "destinationIdentifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Identifier for the destination of the interaction (e.g., IP address, hostname, URL that was targeted).",
+          "title": "Destinationidentifier"
+        },
+        "requestDataSummary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Summary or key parts of the request data sent during the interaction (e.g., DNS query, path of HTTP request).",
+          "title": "Requestdatasummary"
+        },
+        "responseDataSummary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Summary or key parts of the response data received, if any (e.g., DNS resolution, HTTP status and headers).",
+          "title": "Responsedatasummary"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A key-value map for additional custom information specific to this external interaction proof.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "interactionType",
+        "description"
+      ],
+      "title": "ExternalInteractionProofDataModel",
+      "type": "object"
+    },
+    "ExternalInteractionProofTypeEnum": {
+      "description": "Type of external interaction observed as proof.",
+      "enum": [
+        "HTTP_REQUEST",
+        "DNS_QUERY",
+        "LDAP_BIND",
+        "EMAIL_SENT",
+        "FTP_CONNECTION",
+        "TCP_CONNECTION",
+        "UDP_PACKET",
+        "OTHER"
+      ],
+      "title": "ExternalInteractionProofTypeEnum",
+      "type": "string"
+    },
+    "FileSystemChangeTypeEnum": {
+      "enum": [
+        "CREATION",
+        "MODIFICATION",
+        "DELETION",
+        "PERMISSION_CHANGE",
+        "READ_ACCESS"
+      ],
+      "title": "FileSystemChangeTypeEnum",
+      "type": "string"
+    },
+    "FsChangeDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: FILE_SYSTEM_CHANGE_PROOF.",
+      "properties": {
+        "filePath": {
+          "title": "Filepath",
+          "type": "string"
+        },
+        "changeType": {
+          "$ref": "#/$defs/FileSystemChangeTypeEnum"
+        },
+        "contentOrPermissionBefore": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contentorpermissionbefore"
+        },
+        "contentOrPermissionAfter": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contentorpermissionafter"
+        },
+        "commandOrMethodUsed": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commandormethodused"
+        }
+      },
+      "required": [
+        "filePath",
+        "changeType"
+      ],
+      "title": "FsChangeDataModel",
+      "type": "object"
+    },
+    "GeneratorToolInfo": {
+      "additionalProperties": true,
+      "description": "Information about the tool that generated this VXDF document.",
+      "properties": {
+        "name": {
+          "description": "The name of the tool that generated the VXDF document.",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the generating tool.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "GeneratorToolInfo",
+      "type": "object"
+    },
+    "GraphElementModel": {
+      "additionalProperties": false,
+      "description": "A relevant node or edge in a static analysis graph.",
+      "properties": {
+        "elementType": {
+          "$ref": "#/$defs/GraphElementTypeEnum"
+        },
+        "elementId": {
+          "title": "Elementid",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "elementType",
+        "elementId",
+        "description"
+      ],
+      "title": "GraphElementModel",
+      "type": "object"
+    },
+    "GraphElementTypeEnum": {
+      "description": "Type of element in a static analysis graph (node or edge).",
+      "enum": [
+        "NODE",
+        "EDGE"
+      ],
+      "title": "GraphElementTypeEnum",
+      "type": "string"
+    },
+    "HttpHeaderModel": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "title": "HttpHeaderModel",
+      "type": "object"
+    },
+    "HttpMethodEnum": {
+      "enum": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+        "OPTIONS",
+        "HEAD",
+        "CONNECT",
+        "TRACE",
+        "OTHER"
+      ],
+      "title": "HttpMethodEnum",
+      "type": "string"
+    },
+    "HttpParameterLocationEnum": {
+      "enum": [
+        "query",
+        "body_form",
+        "body_json_pointer",
+        "body_xml_xpath",
+        "body_multipart_field_name",
+        "path_segment"
+      ],
+      "title": "HttpParameterLocationEnum",
+      "type": "string"
+    },
+    "HttpRequestBodyEncodingEnum": {
+      "enum": [
+        "plaintext",
+        "base64",
+        "json",
+        "xml",
+        "form_urlencoded"
+      ],
+      "title": "HttpRequestBodyEncodingEnum",
+      "type": "string"
+    },
+    "HttpRequestLogDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: HTTP_REQUEST_LOG.",
+      "properties": {
+        "method": {
+          "$ref": "#/$defs/HttpMethodEnum"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        },
+        "headers": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/HttpHeaderModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Headers"
+        },
+        "body": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body"
+        },
+        "bodyEncoding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpRequestBodyEncodingEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "plaintext"
+        }
+      },
+      "required": [
+        "method",
+        "url"
+      ],
+      "title": "HttpRequestLogDataModel",
+      "type": "object"
+    },
+    "HttpResponseBodyEncodingEnum": {
+      "enum": [
+        "plaintext",
+        "base64",
+        "json",
+        "xml",
+        "html"
+      ],
+      "title": "HttpResponseBodyEncodingEnum",
+      "type": "string"
+    },
+    "HttpResponseLogDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: HTTP_RESPONSE_LOG.",
+      "properties": {
+        "statusCode": {
+          "title": "Statuscode",
+          "type": "integer"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "reasonPhrase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reasonphrase"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        },
+        "headers": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/HttpHeaderModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Headers"
+        },
+        "body": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body"
+        },
+        "bodyEncoding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpResponseBodyEncodingEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "plaintext"
+        }
+      },
+      "required": [
+        "statusCode"
+      ],
+      "title": "HttpResponseLogDataModel",
+      "type": "object"
+    },
+    "ImageFormatEnum": {
+      "enum": [
+        "png",
+        "jpeg",
+        "gif",
+        "bmp",
+        "webp"
+      ],
+      "title": "ImageFormatEnum",
+      "type": "string"
+    },
+    "LocationModel": {
+      "additionalProperties": false,
+      "description": "Describes a specific location relevant to the vulnerability.",
+      "properties": {
+        "locationType": {
+          "$ref": "#/$defs/LocationTypeEnum"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uri"
+        },
+        "uriBaseId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uribaseid"
+        },
+        "filePath": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Filepath"
+        },
+        "startLine": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startline"
+        },
+        "endLine": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endline"
+        },
+        "startColumn": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startcolumn"
+        },
+        "endColumn": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endcolumn"
+        },
+        "snippet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snippet"
+        },
+        "fullyQualifiedName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fullyqualifiedname"
+        },
+        "symbol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Symbol"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "httpMethod": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpMethodEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "parameterName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parametername"
+        },
+        "parameterLocation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpParameterLocationEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "headerName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Headername"
+        },
+        "cookieName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cookiename"
+        },
+        "componentName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Componentname"
+        },
+        "componentVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Componentversion"
+        },
+        "purl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purl"
+        },
+        "cpe": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cpe"
+        },
+        "ecosystem": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ecosystem"
+        },
+        "settingName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Settingname"
+        },
+        "settingValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Settingvalue"
+        },
+        "ipAddress": {
+          "anyOf": [
+            {
+              "format": "ipv4",
+              "type": "string"
+            },
+            {
+              "format": "ipv6",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ipaddress"
+        },
+        "hostname": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hostname"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "maximum": 65535,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Port"
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Protocol"
+        },
+        "databaseType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Databasetype"
+        },
+        "databaseName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Databasename"
+        },
+        "objectType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Objecttype"
+        },
+        "objectName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Objectname"
+        },
+        "environmentVariableName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Environmentvariablename"
+        },
+        "cloudPlatform": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CloudPlatformEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cloudServiceName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cloudservicename"
+        },
+        "cloudResourceId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cloudresourceid"
+        },
+        "binaryFunctionName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Binaryfunctionname"
+        },
+        "binaryOffset": {
+          "anyOf": [
+            {
+              "pattern": "^0x[0-9a-fA-F]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Binaryoffset"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "locationType"
+      ],
+      "title": "LocationModel",
+      "type": "object"
+    },
+    "LocationTypeEnum": {
+      "description": "The primary type of location being described.\nDefinitions based on Appendix L: `Location.locationType` - Definitions and Usage Guidance.",
+      "enum": [
+        "SOURCE_CODE_UNIT",
+        "WEB_ENDPOINT_PARAMETER",
+        "WEB_HTTP_HEADER",
+        "WEB_COOKIE",
+        "SOFTWARE_COMPONENT_LIBRARY",
+        "CONFIGURATION_FILE_SETTING",
+        "FILE_SYSTEM_ARTIFACT",
+        "NETWORK_SERVICE_ENDPOINT",
+        "DATABASE_SCHEMA_OBJECT",
+        "ENVIRONMENT_VARIABLE",
+        "OPERATING_SYSTEM_REGISTRY_KEY",
+        "CLOUD_PLATFORM_RESOURCE",
+        "EXECUTABLE_BINARY_FUNCTION",
+        "PROCESS_MEMORY_REGION",
+        "USER_INTERFACE_ELEMENT",
+        "GENERIC_RESOURCE_IDENTIFIER"
+      ],
+      "title": "LocationTypeEnum",
+      "type": "string"
+    },
+    "ManualVerificationDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: MANUAL_VERIFICATION_NOTES.",
+      "properties": {
+        "verificationSteps": {
+          "description": "Detailed steps taken by the human verifier.",
+          "title": "Verificationsteps",
+          "type": "string"
+        },
+        "observedOutcome": {
+          "description": "The outcome observed by the verifier after performing the steps.",
+          "title": "Observedoutcome",
+          "type": "string"
+        },
+        "testerName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name or identifier of the person who performed the manual verification.",
+          "title": "Testername"
+        },
+        "toolsUsed": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A list of tools or software used during manual verification.",
+          "title": "Toolsused"
+        }
+      },
+      "required": [
+        "verificationSteps",
+        "observedOutcome"
+      ],
+      "title": "ManualVerificationDataModel",
+      "type": "object"
+    },
+    "MissingArtifactDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: MISSING_ARTIFACT_VERIFICATION.",
+      "properties": {
+        "artifactName": {
+          "title": "Artifactname",
+          "type": "string"
+        },
+        "expectedState": {
+          "title": "Expectedstate",
+          "type": "string"
+        },
+        "observedState": {
+          "title": "Observedstate",
+          "type": "string"
+        },
+        "artifactType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Artifacttype"
+        },
+        "checkMethodDescription": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checkmethoddescription"
+        }
+      },
+      "required": [
+        "artifactName",
+        "expectedState",
+        "observedState"
+      ],
+      "title": "MissingArtifactDataModel",
+      "type": "object"
+    },
+    "NetworkCaptureSummaryDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: NETWORK_TRAFFIC_CAPTURE_SUMMARY.",
+      "properties": {
+        "relevantPacketsDescription": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Relevantpacketsdescription",
+          "type": "array"
+        },
+        "captureTool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capturetool"
+        },
+        "captureFilterApplied": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capturefilterapplied"
+        },
+        "exchangedDataSummary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exchangeddatasummary"
+        },
+        "referenceToFullCapture": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Referencetofullcapture"
+        }
+      },
+      "title": "NetworkCaptureSummaryDataModel",
+      "type": "object"
+    },
+    "ObservedBehaviorDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: OBSERVED_BEHAVIORAL_CHANGE.",
+      "properties": {
+        "actionPerformedToTrigger": {
+          "title": "Actionperformedtotrigger",
+          "type": "string"
+        },
+        "expectedBehavior": {
+          "title": "Expectedbehavior",
+          "type": "string"
+        },
+        "observedBehavior": {
+          "title": "Observedbehavior",
+          "type": "string"
+        },
+        "contextualNotes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contextualnotes"
+        }
+      },
+      "required": [
+        "actionPerformedToTrigger",
+        "expectedBehavior",
+        "observedBehavior"
+      ],
+      "title": "ObservedBehaviorDataModel",
+      "type": "object"
+    },
+    "OtherEvidenceDataModel": {
+      "additionalProperties": true,
+      "description": "Structured data for evidenceType: OTHER_EVIDENCE.",
+      "properties": {
+        "dataTypeDescription": {
+          "description": "A description of the type of data contained in dataContent (e.g., 'Raw hex dump', 'Custom binary format log').",
+          "title": "Datatypedescription",
+          "type": "string"
+        },
+        "dataContent": {
+          "description": "The actual data content for this evidence.",
+          "title": "Datacontent",
+          "type": "string"
+        },
+        "encodingFormat": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OtherEvidenceEncodingFormatEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "plaintext",
+          "description": "The encoding format of dataContent, if not plaintext."
+        }
+      },
+      "required": [
+        "dataTypeDescription",
+        "dataContent"
+      ],
+      "title": "OtherEvidenceDataModel",
+      "type": "object"
+    },
+    "OtherEvidenceEncodingFormatEnum": {
+      "enum": [
+        "plaintext",
+        "base64",
+        "hex",
+        "json_string",
+        "xml_string",
+        "custom_format",
+        "uri_to_external_resource"
+      ],
+      "title": "OtherEvidenceEncodingFormatEnum",
+      "type": "string"
+    },
+    "PathNodeModel": {
+      "additionalProperties": false,
+      "description": "A single node in a static analysis data flow path.",
+      "properties": {
+        "order": {
+          "minimum": 0,
+          "title": "Order",
+          "type": "integer"
+        },
+        "location": {
+          "$ref": "#/$defs/LocationModel"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "order",
+        "location",
+        "description"
+      ],
+      "title": "PathNodeModel",
+      "type": "object"
+    },
+    "PayloadEncodingEnum": {
+      "enum": [
+        "plaintext",
+        "base64",
+        "hex",
+        "urlencoded",
+        "utf16le",
+        "utf16be",
+        "json_escaped",
+        "xml_escaped",
+        "custom"
+      ],
+      "title": "PayloadEncodingEnum",
+      "type": "string"
+    },
+    "PocScriptDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: POC_SCRIPT.",
+      "properties": {
+        "scriptLanguage": {
+          "title": "Scriptlanguage",
+          "type": "string"
+        },
+        "scriptContent": {
+          "title": "Scriptcontent",
+          "type": "string"
+        },
+        "scriptArguments": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Scriptarguments"
+        },
+        "expectedOutcome": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expectedoutcome"
+        }
+      },
+      "required": [
+        "scriptLanguage",
+        "scriptContent"
+      ],
+      "title": "PocScriptDataModel",
+      "type": "object"
+    },
+    "RelevantSettingItemModel": {
+      "additionalProperties": false,
+      "description": "A single relevant configuration setting for the environment.",
+      "properties": {
+        "settingName": {
+          "title": "Settingname",
+          "type": "string"
+        },
+        "settingValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Settingvalue"
+        },
+        "sourceDescription": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcedescription"
+        }
+      },
+      "required": [
+        "settingName"
+      ],
+      "title": "RelevantSettingItemModel",
+      "type": "object"
+    },
+    "RemediationCodePatchModel": {
+      "additionalProperties": false,
+      "description": "Describes a specific code patch suggested for remediation.",
+      "properties": {
+        "filePath": {
+          "description": "The path to the file that requires patching.",
+          "title": "Filepath",
+          "type": "string"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The programming language of the file, if relevant for interpreting the patch.",
+          "title": "Language"
+        },
+        "patchContent": {
+          "description": "The content of the patch, e.g., a diff in unified format, or the complete new code block.",
+          "title": "Patchcontent",
+          "type": "string"
+        },
+        "patchType": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The type or format of the patchContent (e.g., 'diff-unified', 'replace-block', 'new-file').",
+          "title": "Patchtype"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A brief description of what this specific code patch achieves.",
+          "title": "Description"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Custom properties for this code patch.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "filePath",
+        "patchContent"
+      ],
+      "title": "RemediationCodePatchModel",
+      "type": "object"
+    },
+    "RemediationModel": {
+      "additionalProperties": false,
+      "description": "Provides information and recommendations for remediating the vulnerability.",
+      "properties": {
+        "description": {
+          "description": "A detailed explanation of the recommended remediation strategy or fix for the vulnerability.",
+          "title": "Description",
+          "type": "string"
+        },
+        "recommendations": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A list of specific, actionable recommendations or steps to take.",
+          "title": "Recommendations"
+        },
+        "codePatches": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/RemediationCodePatchModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "One or more suggested code patches.",
+          "title": "Codepatches"
+        },
+        "configurationsToUpdate": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A list of configurations that need to be updated. Each item could be a dict specifying e.g., 'filePath', 'settingName', 'newValue'.",
+          "title": "Configurationstoupdate"
+        },
+        "estimatedEffort": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "An estimation of the effort required for remediation (e.g., 'Low', 'Medium', 'High', '2 Person-Days').",
+          "title": "Estimatedeffort"
+        },
+        "priority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The priority for applying this remediation (e.g., 'Urgent', 'High', 'Medium', 'Low').",
+          "title": "Priority"
+        },
+        "trackingId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "An identifier for tracking this remediation action in an external system (e.g., ticket number).",
+          "title": "Trackingid"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The current status of this remediation (e.g., 'Proposed', 'Approved', 'In Progress', 'Implemented', 'Verification Pending', 'Completed').",
+          "title": "Status"
+        },
+        "verifiedBy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Identifier of the person or system that verified the remediation.",
+          "title": "Verifiedby"
+        },
+        "verificationDate": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp of when the remediation was verified. Assumed to be UTC.",
+          "title": "Verificationdate"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Custom properties for this remediation information.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "title": "RemediationModel",
+      "type": "object"
+    },
+    "RuntimeLogEntryDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for various runtime log entry evidence types.",
+      "properties": {
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "logSourceIdentifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Logsourceidentifier"
+        },
+        "timestampInLog": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestampinlog"
+        },
+        "logLevel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Loglevel"
+        },
+        "threadId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threadid"
+        },
+        "processId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Processid"
+        },
+        "componentName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Componentname"
+        },
+        "structuredLogData": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Structuredlogdata"
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "title": "RuntimeLogEntryDataModel",
+      "type": "object"
+    },
+    "ScaComponentIdentifierModel": {
+      "additionalProperties": false,
+      "description": "Details identifying the vulnerable component in SCA output.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "purl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purl"
+        },
+        "cpe": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cpe"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "ScaComponentIdentifierModel",
+      "type": "object"
+    },
+    "ScaOutputDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: VULNERABLE_COMPONENT_SCAN_OUTPUT.",
+      "properties": {
+        "componentIdentifier": {
+          "$ref": "#/$defs/ScaComponentIdentifierModel"
+        },
+        "vulnerabilityIdentifiers": {
+          "items": {
+            "$ref": "#/$defs/ScaVulnerabilityIdentifierModel"
+          },
+          "minItems": 1,
+          "title": "Vulnerabilityidentifiers",
+          "type": "array"
+        },
+        "toolName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Toolname"
+        },
+        "vulnerabilitySeverity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vulnerabilityseverity"
+        },
+        "details": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Details"
+        }
+      },
+      "required": [
+        "componentIdentifier",
+        "vulnerabilityIdentifiers"
+      ],
+      "title": "ScaOutputDataModel",
+      "type": "object"
+    },
+    "ScaVulnerabilityIdentifierModel": {
+      "additionalProperties": false,
+      "description": "A specific vulnerability identifier associated with a component in SCA output.",
+      "properties": {
+        "idSystem": {
+          "$ref": "#/$defs/VulnerabilityIdSystemEnum"
+        },
+        "idValue": {
+          "title": "Idvalue",
+          "type": "string"
+        }
+      },
+      "required": [
+        "idSystem",
+        "idValue"
+      ],
+      "title": "ScaVulnerabilityIdentifierModel",
+      "type": "object"
+    },
+    "ScreenshotEmbeddedDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: SCREENSHOT_EMBEDDED_BASE64.",
+      "properties": {
+        "imageDataBase64": {
+          "description": "Base64 encoded string of the image data.",
+          "title": "Imagedatabase64",
+          "type": "string"
+        },
+        "imageFormat": {
+          "$ref": "#/$defs/ImageFormatEnum"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption"
+        }
+      },
+      "required": [
+        "imageDataBase64",
+        "imageFormat"
+      ],
+      "title": "ScreenshotEmbeddedDataModel",
+      "type": "object"
+    },
+    "ScreenshotUrlDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: SCREENSHOT_URL.",
+      "properties": {
+        "url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption"
+        },
+        "requiresAuthentication": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "title": "Requiresauthentication"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "ScreenshotUrlDataModel",
+      "type": "object"
+    },
+    "SessionInfoLeakDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: SESSION_INFORMATION_LEAK.",
+      "properties": {
+        "leakedInformationType": {
+          "title": "Leakedinformationtype",
+          "type": "string"
+        },
+        "leakedDataSample": {
+          "title": "Leakeddatasample",
+          "type": "string"
+        },
+        "exposureContextDescription": {
+          "title": "Exposurecontextdescription",
+          "type": "string"
+        },
+        "potentialImpact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Potentialimpact"
+        }
+      },
+      "required": [
+        "leakedInformationType",
+        "leakedDataSample",
+        "exposureContextDescription"
+      ],
+      "title": "SessionInfoLeakDataModel",
+      "type": "object"
+    },
+    "SeverityLevelEnum": {
+      "description": "A qualitative severity level assigned to the vulnerability.\nDefinitions based on Appendix J: `Severity.level` - Definitions.",
+      "enum": [
+        "CRITICAL",
+        "HIGH",
+        "MEDIUM",
+        "LOW",
+        "INFORMATIONAL",
+        "NONE"
+      ],
+      "title": "SeverityLevelEnum",
+      "type": "string"
+    },
+    "SeverityModel": {
+      "additionalProperties": false,
+      "description": "Represents the severity of the vulnerability.",
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/SeverityLevelEnum"
+        },
+        "cvssV3_1": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV3_1Model"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cvssV4_0": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CvssV4_0Model"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "customScore": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CustomScoreModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "justification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Justification"
+        }
+      },
+      "required": [
+        "level"
+      ],
+      "title": "SeverityModel",
+      "type": "object"
+    },
+    "SoftwareStackItemModel": {
+      "additionalProperties": false,
+      "description": "A single software component in the environment's stack.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        },
+        "purl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purl"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "SoftwareStackItemModel",
+      "type": "object"
+    },
+    "StaticAnalysisGraphDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: STATIC_ANALYSIS_CONTROL_FLOW_GRAPH or other graph-based static analysis evidence.",
+      "properties": {
+        "graphType": {
+          "$ref": "#/$defs/StaticAnalysisGraphTypeEnum"
+        },
+        "graphDescription": {
+          "title": "Graphdescription",
+          "type": "string"
+        },
+        "toolName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Toolname"
+        },
+        "functionNameOrScope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Functionnameorscope"
+        },
+        "relevantNodesOrEdges": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/GraphElementModel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Relevantnodesoredges"
+        },
+        "imageOfGraphUrl": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Imageofgraphurl"
+        }
+      },
+      "required": [
+        "graphType",
+        "graphDescription"
+      ],
+      "title": "StaticAnalysisGraphDataModel",
+      "type": "object"
+    },
+    "StaticAnalysisGraphTypeEnum": {
+      "description": "Type of graph represented in static analysis graph data.",
+      "enum": [
+        "CONTROL_FLOW",
+        "CALL_GRAPH",
+        "DATA_DEPENDENCE_GRAPH",
+        "PROGRAM_DEPENDENCE_GRAPH",
+        "OTHER"
+      ],
+      "title": "StaticAnalysisGraphTypeEnum",
+      "type": "string"
+    },
+    "StaticAnalysisPathDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: STATIC_ANALYSIS_DATA_FLOW_PATH.",
+      "properties": {
+        "pathNodes": {
+          "items": {
+            "$ref": "#/$defs/PathNodeModel"
+          },
+          "minItems": 2,
+          "title": "Pathnodes",
+          "type": "array"
+        },
+        "toolName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Toolname"
+        },
+        "queryOrRuleId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Queryorruleid"
+        }
+      },
+      "required": [
+        "pathNodes"
+      ],
+      "title": "StaticAnalysisPathDataModel",
+      "type": "object"
+    },
+    "StatusEnum": {
+      "description": "The current status of this vulnerability finding within a management lifecycle.\nDefinitions based on Appendix K: `ExploitFlow.status` - Definitions.",
+      "enum": [
+        "OPEN",
+        "UNDER_INVESTIGATION",
+        "REMEDIATION_IN_PROGRESS",
+        "REMEDIATED",
+        "REMEDIATION_VERIFIED",
+        "FALSE_POSITIVE_AFTER_REVALIDATION",
+        "ACCEPTED_RISK",
+        "DEFERRED",
+        "OTHER"
+      ],
+      "title": "StatusEnum",
+      "type": "string"
+    },
+    "StepTypeEnum": {
+      "description": "The nature of this step in the flow.\nDefinitions based on Appendix M: `TraceStep.stepType` - Definitions.",
+      "enum": [
+        "SOURCE_INTERACTION",
+        "DATA_TRANSFORMATION",
+        "DATA_PROPAGATION",
+        "CONTROL_FLOW_BRANCH",
+        "SINK_INTERACTION",
+        "VALIDATION_OR_SANITIZATION",
+        "CONFIGURATION_ACCESS",
+        "COMPONENT_CALL",
+        "STATE_CHANGE",
+        "INTERMEDIATE_NODE"
+      ],
+      "title": "StepTypeEnum",
+      "type": "string"
+    },
+    "TestPayloadDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: TEST_PAYLOAD_USED.",
+      "properties": {
+        "payloadContent": {
+          "description": "The actual content of the test payload.",
+          "title": "Payloadcontent",
+          "type": "string"
+        },
+        "payloadDescription": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A brief description of the payload, its purpose, or how it was crafted.",
+          "title": "Payloaddescription"
+        },
+        "payloadEncoding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PayloadEncodingEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "plaintext",
+          "description": "The encoding format of the payloadContent, if not plaintext."
+        },
+        "targetParameterOrLocation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Specifies where the payload was injected or used (e.g., URL parameter name, HTTP header, file path).",
+          "title": "Targetparameterorlocation"
+        }
+      },
+      "required": [
+        "payloadContent"
+      ],
+      "title": "TestPayloadDataModel",
+      "type": "object"
+    },
+    "ToolSpecificOutputDataModel": {
+      "additionalProperties": false,
+      "description": "Structured data for evidenceType: TOOL_SPECIFIC_OUTPUT_LOG.",
+      "properties": {
+        "toolName": {
+          "title": "Toolname",
+          "type": "string"
+        },
+        "relevantLogSectionOrOutput": {
+          "title": "Relevantlogsectionoroutput",
+          "type": "string"
+        },
+        "toolVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Toolversion"
+        },
+        "commandLineExecuted": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commandlineexecuted"
+        },
+        "interpretationOfOutput": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Interpretationofoutput"
+        }
+      },
+      "required": [
+        "toolName",
+        "relevantLogSectionOrOutput"
+      ],
+      "title": "ToolSpecificOutputDataModel",
+      "type": "object"
+    },
+    "TraceStepModel": {
+      "additionalProperties": false,
+      "description": "A single step in the data flow or exploit path.",
+      "properties": {
+        "order": {
+          "minimum": 0,
+          "title": "Order",
+          "type": "integer"
+        },
+        "location": {
+          "$ref": "#/$defs/LocationModel"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "stepType": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StepTypeEnum"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evidenceRefs": {
+          "anyOf": [
+            {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Evidencerefs"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "order",
+        "location",
+        "description"
+      ],
+      "title": "TraceStepModel",
+      "type": "object"
+    },
+    "ValidationEngineModel": {
+      "additionalProperties": false,
+      "description": "Details about the validation engine or tool that performed an automated validation step.",
+      "properties": {
+        "name": {
+          "description": "The name of the validation engine or tool.",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the validation engine or tool.",
+          "title": "Version"
+        },
+        "ruleset_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The name of the ruleset or policy file used by the engine, if applicable.",
+          "title": "Ruleset Name"
+        },
+        "ruleset_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the ruleset or policy file used, if applicable.",
+          "title": "Ruleset Version"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A key-value map for additional custom information about the validation engine.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ValidationEngineModel",
+      "type": "object"
+    },
+    "ValidationItemModel": {
+      "additionalProperties": false,
+      "description": "Describes a specific validation event or check performed by a human or an automated tool.",
+      "properties": {
+        "validationId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional unique ID for this validation item.",
+          "title": "Validationid"
+        },
+        "validatorName": {
+          "description": "Name or identifier of the validator (e.g., tester name, automated tool name).",
+          "title": "Validatorname",
+          "type": "string"
+        },
+        "engineInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValidationEngineModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Details of the validation engine used, if applicable."
+        },
+        "timestamp": {
+          "description": "Timestamp of when the validation was performed. Assumed to be UTC.",
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "method": {
+          "$ref": "#/$defs/ValidationMethodEnum",
+          "description": "The method used for this validation step."
+        },
+        "conclusion": {
+          "description": "The outcome or conclusion of this validation step (e.g., 'Vulnerability Confirmed', 'False Positive').",
+          "title": "Conclusion",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Detailed notes or observations from the validator.",
+          "title": "Description"
+        },
+        "evidenceRefs": {
+          "anyOf": [
+            {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "List of UUIDs referencing evidence items supporting this validation.",
+          "title": "Evidencerefs"
+        },
+        "reproducibilityNotes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Notes on how to reproduce this validation step or its findings.",
+          "title": "Reproducibilitynotes"
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A key-value map for additional custom information about this validation item.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "validatorName",
+        "method",
+        "conclusion"
+      ],
+      "title": "ValidationItemModel",
+      "type": "object"
+    },
+    "ValidationMethodEnum": {
+      "description": "The primary method used to obtain or validate this specific piece of evidence as proof of exploitability.\nDefinitions based on Appendix O: `Evidence.validationMethod` - Definitions.",
+      "enum": [
+        "STATIC_ANALYSIS_VALIDATION",
+        "DYNAMIC_ANALYSIS_EXPLOIT",
+        "INTERACTIVE_APPLICATION_SECURITY_TESTING_EXPLOIT",
+        "MANUAL_CODE_REVIEW_CONFIRMATION",
+        "MANUAL_PENETRATION_TESTING_EXPLOIT",
+        "AUTOMATED_EXPLOIT_TOOL_CONFIRMATION",
+        "SOFTWARE_COMPOSITION_ANALYSIS_CONTEXTUAL_VALIDATION",
+        "FUZZ_TESTING_CRASH_ANALYSIS",
+        "REVERSE_ENGINEERING_PROOF",
+        "CONFIGURATION_AUDIT_VERIFICATION",
+        "LOG_ANALYSIS_CORRELATION",
+        "HYBRID_VALIDATION",
+        "OTHER_VALIDATION_METHOD"
+      ],
+      "title": "ValidationMethodEnum",
+      "type": "string"
+    },
+    "VariableStateModel": {
+      "additionalProperties": false,
+      "description": "State of a relevant variable at the time of debugger capture.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "title": "VariableStateModel",
+      "type": "object"
+    },
+    "VulnerabilityDetailsModel": {
+      "additionalProperties": false,
+      "description": "Contains all detailed information about a single, validated vulnerability finding.",
+      "properties": {
+        "vulnerabilityId": {
+          "description": "A unique identifier for this vulnerability finding (e.g., internal tracking ID).",
+          "title": "Vulnerabilityid",
+          "type": "string"
+        },
+        "alternateIds": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A list of alternative identifiers (e.g., CVE, GHSA, bug tracker IDs).",
+          "title": "Alternateids"
+        },
+        "title": {
+          "description": "A concise, human-readable title for the vulnerability.",
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "description": "A detailed description of the vulnerability, its nature, and potential impact.",
+          "title": "Description",
+          "type": "string"
+        },
+        "discoveryDate": {
+          "description": "The date and time when the vulnerability was first discovered or reported. Assumed to be UTC.",
+          "format": "date-time",
+          "title": "Discoverydate",
+          "type": "string"
+        },
+        "disclosureDate": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The date and time when the vulnerability was or is planned to be publicly disclosed. Assumed to be UTC.",
+          "title": "Disclosuredate"
+        },
+        "discoverySource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Information about how or from where the vulnerability was discovered (e.g., 'Internal SAST', 'Bug Bounty Program', specific tool name).",
+          "title": "Discoverysource"
+        },
+        "severity": {
+          "$ref": "#/$defs/SeverityModel",
+          "description": "The overall severity assessment for this vulnerability."
+        },
+        "exploitFlows": {
+          "description": "One or more detailed exploit flows or data paths demonstrating the vulnerability.",
+          "items": {
+            "$ref": "#/$defs/ExploitFlowModel"
+          },
+          "minItems": 1,
+          "title": "Exploitflows",
+          "type": "array"
+        },
+        "affectedApplications": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ApplicationInfo"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Information about the applications, systems, or components affected by this vulnerability.",
+          "title": "Affectedapplications"
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A list of keywords or tags for categorizing or filtering the vulnerability.",
+          "title": "Tags"
+        },
+        "cwes": {
+          "anyOf": [
+            {
+              "items": {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A list of Common Weakness Enumeration (CWE) identifiers relevant to this vulnerability (e.g., [79, 89]).",
+          "title": "Cwes"
+        },
+        "owaspTopTenCategories": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Relevant OWASP Top Ten categories (e.g., 'A01:2021-Broken Access Control').",
+          "title": "Owasptoptencategories"
+        },
+        "references": {
+          "anyOf": [
+            {
+              "items": {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A list of URLs to external advisories, write-ups, or other relevant resources.",
+          "title": "References"
+        },
+        "remediationInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RemediationModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Detailed information and recommendations for remediating the vulnerability."
+        },
+        "customProperties": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A key-value map for additional custom information about this vulnerability.",
+          "title": "Customproperties"
+        }
+      },
+      "required": [
+        "vulnerabilityId",
+        "title",
+        "description",
+        "severity",
+        "exploitFlows"
+      ],
+      "title": "VulnerabilityDetailsModel",
+      "type": "object"
+    },
+    "VulnerabilityIdSystemEnum": {
+      "description": "The system or namespace of a vulnerability identifier in SCA output.",
+      "enum": [
+        "CVE",
+        "GHSA",
+        "OSV",
+        "NVD",
+        "SNYK",
+        "VENDOR_SPECIFIC",
+        "OTHER"
+      ],
+      "title": "VulnerabilityIdSystemEnum",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The root model for a Validated Exploitable Data Flow (VXDF) document.",
+  "properties": {
+    "vxdfVersion": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "description": "The version of the VXDF specification to which this document conforms. MUST be '1.0.0'.",
+      "title": "Vxdfversion",
+      "type": "string"
+    },
+    "documentId": {
+      "description": "A unique identifier for this VXDF document instance.",
+      "format": "uuid",
+      "title": "Documentid",
+      "type": "string"
+    },
+    "generatedAt": {
+      "description": "The timestamp indicating when this VXDF document was generated. Assumed to be UTC.",
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "generatorToolInfo": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GeneratorToolInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Information about the tool that generated this VXDF document."
+    },
+    "vulnerability": {
+      "$ref": "#/$defs/VulnerabilityDetailsModel",
+      "description": "The detailed information about the validated vulnerability finding."
+    },
+    "evidencePool": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/EvidenceModel"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "A pool of all evidence items referenced within this document. Ensures evidence can be defined once and referenced multiple times by its UUID.",
+      "title": "Evidencepool"
+    },
+    "customProperties": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "A key-value map for top-level custom information related to this VXDF document.",
+      "title": "Customproperties"
+    }
+  },
+  "required": [
+    "vulnerability"
+  ],
+  "title": "VXDFModel",
+  "type": "object"
+}

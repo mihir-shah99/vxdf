@@ -31,7 +31,7 @@ api/
 ├── server.py         # Flask server (entrypoint)
 ├── api.py            # API endpoint definitions
 ├── config.py         # Configuration settings
-├── models/           # Data models and database definitions
+├── models/           # VXDF Pydantic models defining the canonical schema (see models/vxdf.py)
 ├── validators/       # Validation logic for different vulnerability types
 ├── core/             # Core business logic
 ├── parsers/          # Data parsers (SARIF, etc.)
@@ -60,10 +60,9 @@ Implements the Flask server that hosts the API, including:
 
 ### Models (`models/`)
 
-Data models for the application, including:
-- Finding: Represents a security finding from a scanner
-- VXDF: Contains the VXDF document structure definitions
-- Database: Database connection and session management
+Contains the Pydantic models defining the canonical VXDF data structure, primarily in `vxdf.py`.
+These models serve as the source of truth for the VXDF format and are used for data validation, serialization, and deserialization across the application.
+They directly implement the [VXDF Specification](https://github.com/VXDF/vxdf/blob/main/docs/Validated%20Exploitable%20Data%20Flow%20(VXDF)%20Format.md).
 
 ### Validators (`validators/`)
 
