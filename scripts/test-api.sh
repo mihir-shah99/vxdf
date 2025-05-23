@@ -1,4 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Enable strict mode
+set -o errexit  # Exit on error
+set -o errtrace # Exit on error in functions
+set -o nounset  # Exit on undefined variables
+set -o pipefail # Exit on pipe failures
+# set -o xtrace # Uncomment for debugging
+
+# Set safe field separator
+# nosemgrep: ifs-tampering
+IFS=$'\n\t'
 
 # Start the API server in the background
 cd api || exit 1
