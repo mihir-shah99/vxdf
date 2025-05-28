@@ -1160,3 +1160,42 @@ class VXDFModel(BaseModel):
 
 # Consider adding validators, e.g., for ensuring evidenceRefs in various models point to valid UUIDs in the evidencePool.
 # This would be more advanced validation logic beyond basic schema conformance.
+
+# --- Backward Compatibility Aliases --- #
+# These aliases maintain compatibility with existing code that expects the old model names
+
+# Main document alias
+VXDFDocument = VXDFModel
+
+# Metadata is now part of the main document, but we can create a simple alias
+# The old VXDFMetadata was likely simpler, so we'll create a basic model
+class VXDFMetadata(BaseModel):
+    """Legacy metadata model for backward compatibility."""
+    generator_version: str
+    target_application: str
+    target_version: Optional[str] = None
+    
+    model_config = {"extra": "allow"}
+
+# Flow alias - the old VXDFFlow is now ExploitFlowModel
+VXDFFlow = ExploitFlowModel
+
+# Summary model for backward compatibility
+class VXDFSummary(BaseModel):
+    """Legacy summary model for backward compatibility."""
+    total_flows: int = 0
+    exploitable_flows: int = 0
+    
+    model_config = {"extra": "allow"}
+
+# Location alias - the old CodeLocation is now LocationModel
+CodeLocation = LocationModel
+
+# Step alias - the old DataFlowStep is now TraceStepModel  
+DataFlowStep = TraceStepModel
+
+# Evidence alias - the old EvidenceItem is now EvidenceModel
+EvidenceItem = EvidenceModel
+
+# Severity alias - the old SeverityLevel is now SeverityLevelEnum
+SeverityLevel = SeverityLevelEnum
