@@ -199,7 +199,7 @@ def upload_file():
         output_path = Path(OUTPUT_DIR) / output_filename
         
         with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(vxdf_doc.to_json(pretty=True))
+            f.write(vxdf_doc.model_dump_json(indent=2))
         
         # Return results in frontend-compatible format
         result_findings = []

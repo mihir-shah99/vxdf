@@ -12,8 +12,12 @@ from sqlalchemy.orm import Session
 from api.models.database import get_db, SessionLocal
 from api.models.finding import Finding, Evidence
 from api.models.vxdf import (
-    VXDFDocument, VXDFMetadata, VXDFFlow, VXDFSummary, 
-    CodeLocation, DataFlowStep, EvidenceItem, SeverityLevel
+    VXDFModel, GeneratorToolInfo, ApplicationInfo, VulnerabilityDetailsModel,
+    ExploitFlowModel, TraceStepModel, LocationModel, EvidenceModel, SeverityModel,
+    SeverityLevelEnum, StatusEnum, LocationTypeEnum, StepTypeEnum, 
+    ValidationMethodEnum, EvidenceTypeEnum, AffectedComponentModel,
+    OtherEvidenceDataModel, ManualVerificationDataModel, 
+    CodeSnippetDataModel, RuntimeLogEntryDataModel
 )
 from api.core.validator import ValidatorFactory
 from api import __version__
@@ -162,9 +166,9 @@ class ValidationEngine:
     
     def generate_vxdf(self, findings: List[Finding], 
                      target_name: str = "Unknown Application",
-                     target_version: Optional[str] = None) -> VXDFDocument:
+                     target_version: Optional[str] = None) -> VXDFModel:
         """
-        Generate a VXDF document from validated findings.
+        Generate a VXDF document from validated findings using v1.0.0 schema.
         
         Args:
             findings: List of validated findings
@@ -172,124 +176,193 @@ class ValidationEngine:
             target_version: Version of the target application
             
         Returns:
-            VXDF document
+            VXDF v1.0.0 compliant document
         """
-        logger.info(f"Generating VXDF document for {len(findings)} findings")
+        logger.info(f"Generating VXDF v1.0.0 document for {len(findings)} findings")
         
-        # Create metadata
-        metadata = VXDFMetadata(
-            generator_version=__version__,
-            target_application=target_name,
-            target_version=target_version
+        # Create generator tool info
+        generator_info = GeneratorToolInfo(
+            name="VXDF Validate",
+            version=__version__
         )
         
-        # Create flows from findings
-        flows = []
+        # Create application info
+        app_info = ApplicationInfo(
+            name=target_name,
+            version=target_version
+        )
+        
+        # Create evidence pool
+        evidence_pool = []
+        
+        # Create exploit flows from findings
+        exploit_flows = []
         for finding in findings:
             if not finding.is_validated:
                 logger.warning(f"Skipping unvalidated finding: {finding.id}")
                 continue
             
-            flow = self._create_flow_from_finding(finding)
-            flows.append(flow)
+            flow, flow_evidence = self._create_exploit_flow_from_finding(finding)
+            exploit_flows.append(flow)
+            evidence_pool.extend(flow_evidence)
         
-        # Create VXDF document
-        vxdf_doc = VXDFDocument(
-            metadata=metadata,
-            flows=flows
+        # If no exploit flows were created, create a default one
+        if not exploit_flows:
+            logger.info("No findings provided, creating default exploit flow")
+            default_location = LocationModel(
+                locationType=LocationTypeEnum.GENERIC_RESOURCE_IDENTIFIER,
+                description="No specific location identified"
+            )
+            
+            default_step = TraceStepModel(
+                order=0,
+                location=default_location,
+                description="No validated vulnerabilities found",
+                stepType=StepTypeEnum.SOURCE_INTERACTION
+            )
+            
+            default_flow = ExploitFlowModel(
+                description="No validated vulnerabilities found in this assessment",
+                trace=[default_step],
+                status=StatusEnum.FALSE_POSITIVE_AFTER_REVALIDATION
+            )
+            exploit_flows.append(default_flow)
+        
+        # Create severity assessment for the overall vulnerability
+        # For now, use the highest severity from all flows
+        max_severity = SeverityLevelEnum.INFORMATIONAL
+        if findings:
+            # Find the highest severity from findings
+            severity_order = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL', 'NONE']
+            for finding in findings:
+                if finding.severity and finding.severity in severity_order:
+                    finding_severity_index = severity_order.index(finding.severity)
+                    current_severity_index = severity_order.index(max_severity.value)
+                    if finding_severity_index < current_severity_index:
+                        max_severity = SeverityLevelEnum(finding.severity)
+        
+        severity_model = SeverityModel(
+            level=max_severity,
+            justification="Severity determined from validation results"
         )
         
-        # Generate summary statistics
-        vxdf_doc.generate_summary()
+        # Create vulnerability details
+        vulnerability_details = VulnerabilityDetailsModel(
+            vulnerabilityId=str(uuid.uuid4()),
+            title=f"Security Assessment Results for {target_name}",
+            description=f"Security assessment results for {target_name}. {len(findings)} findings processed.",
+            severity=severity_model,
+            exploitFlows=exploit_flows,
+            affectedApplications=[app_info] if app_info else []
+        )
+        
+        # Create VXDF document
+        vxdf_doc = VXDFModel(
+            generatorToolInfo=generator_info,
+            vulnerability=vulnerability_details,
+            evidencePool=evidence_pool
+        )
         
         return vxdf_doc
     
-    def _create_flow_from_finding(self, finding: Finding) -> VXDFFlow:
+    def _create_exploit_flow_from_finding(self, finding: Finding) -> tuple[ExploitFlowModel, List[EvidenceModel]]:
         """
-        Create a VXDF flow from a finding.
+        Create a VXDF v1.0.0 exploit flow from a finding.
         
         Args:
             finding: Finding to convert
             
         Returns:
-            VXDF flow
+            Tuple of (ExploitFlowModel, List of EvidenceModel)
         """
-        # Map severity
-        try:
-            severity = SeverityLevel(finding.severity)
-        except ValueError:
-            severity = SeverityLevel.MEDIUM
-        
-        # Create source location
-        source = CodeLocation(
-            file_path=finding.file_path or "Unknown",
-            line_number=finding.line_number,
-            column=finding.column
-        )
-        
-        # Create sink location - for now, we use the same as source if not available
-        # In a real-world scenario, we would extract this from data flow
-        sink = source
-        
-        # Create evidence items
+        # Create evidence items first
         evidence_items = []
         for evidence in finding.evidence:
-            evidence_item = EvidenceItem(
-                type=evidence.evidence_type,
-                description=evidence.description,
-                content=evidence.content
+            # Map evidence type to new enum
+            evidence_type = EvidenceTypeEnum.OTHER_EVIDENCE
+            try:
+                evidence_type = EvidenceTypeEnum(evidence.evidence_type.upper())
+            except ValueError:
+                pass
+            
+            # Create appropriate data structure based on evidence type
+            evidence_data = None
+            if evidence_type == EvidenceTypeEnum.OTHER_EVIDENCE:
+                evidence_data = OtherEvidenceDataModel(
+                    dataTypeDescription="Legacy evidence data",
+                    dataContent=str(evidence.content) if evidence.content else "No content"
+                )
+            elif evidence_type == EvidenceTypeEnum.MANUAL_VERIFICATION_NOTES:
+                evidence_data = ManualVerificationDataModel(
+                    verificationSteps="Manual verification performed",
+                    observedOutcome=str(evidence.content) if evidence.content else "No outcome recorded"
+                )
+            elif evidence_type in [EvidenceTypeEnum.CODE_SNIPPET_SOURCE, EvidenceTypeEnum.CODE_SNIPPET_SINK, EvidenceTypeEnum.CODE_SNIPPET_CONTEXT]:
+                evidence_data = CodeSnippetDataModel(
+                    content=str(evidence.content) if evidence.content else "No code content",
+                    filePath=finding.file_path
+                )
+            elif evidence_type in [EvidenceTypeEnum.RUNTIME_APPLICATION_LOG_ENTRY, EvidenceTypeEnum.RUNTIME_SYSTEM_LOG_ENTRY]:
+                evidence_data = RuntimeLogEntryDataModel(
+                    message=str(evidence.content) if evidence.content else "No log message"
+                )
+            else:
+                # Default to other evidence for unknown types
+                evidence_data = OtherEvidenceDataModel(
+                    dataTypeDescription=f"Evidence of type {evidence_type.value}",
+                    dataContent=str(evidence.content) if evidence.content else "No content"
+                )
+            
+            evidence_item = EvidenceModel(
+                evidenceType=evidence_type,
+                description=evidence.description or f"Evidence for {finding.name}",
+                data=evidence_data,
+                validationMethod=ValidationMethodEnum.AUTOMATED_EXPLOIT_TOOL_CONFIRMATION
             )
             evidence_items.append(evidence_item)
         
-        # Create data flow steps
-        steps = []
-        
-        # If we have raw data with flow information, try to extract steps
-        if finding.raw_data and isinstance(finding.raw_data, dict):
-            # Extract from SARIF code flows if available
-            if 'code_flows' in finding.raw_data:
-                steps = self._extract_steps_from_sarif(finding.raw_data['code_flows'])
-        
-        # If no steps were extracted and we have source/sink, create simple flow
-        if not steps and finding.file_path:
-            # Add source step
-            source_step = DataFlowStep(
-                description="Source of untrusted data",
-                location=source,
-                step_type="source"
-            )
-            steps.append(source_step)
-            
-            # Add sink step
-            sink_step = DataFlowStep(
-                description="Sink where vulnerability is triggered",
-                location=sink,
-                step_type="sink"
-            )
-            steps.append(sink_step)
-        
-        # Create the VXDF flow
-        flow = VXDFFlow(
-            id=str(uuid.uuid4()),
-            name=finding.name,
-            description=finding.description or "No description available",
-            vulnerability_type=finding.vulnerability_type,
-            cwe_id=finding.cwe_id,
-            severity=severity,
-            cvss_score=finding.cvss_score,
-            source=source,
-            sink=sink,
-            steps=steps,
-            evidence=evidence_items,
-            is_exploitable=finding.is_exploitable if finding.is_exploitable is not None else False,
-            validation_date=finding.validation_date or datetime.datetime.utcnow(),
-            validation_message=finding.validation_message,
-            raw_finding_id=finding.source_id
+        # Create source location
+        source_location = LocationModel(
+            locationType=LocationTypeEnum.SOURCE_CODE_UNIT,
+            filePath=finding.file_path or "Unknown",
+            startLine=finding.line_number,
+            startColumn=finding.column,
+            description="Source location of the vulnerability"
         )
         
-        return flow
+        # Create trace steps
+        trace_steps = []
+        
+        # Add source step
+        source_step = TraceStepModel(
+            order=0,
+            location=source_location,
+            description="Source of untrusted data",
+            stepType=StepTypeEnum.SOURCE_INTERACTION,
+            evidenceRefs={evidence.id for evidence in evidence_items}
+        )
+        trace_steps.append(source_step)
+        
+        # Add sink step (for now, same as source if no flow data available)
+        sink_step = TraceStepModel(
+            order=1,
+            location=source_location,
+            description="Sink where vulnerability is triggered",
+            stepType=StepTypeEnum.SINK_INTERACTION,
+            evidenceRefs={evidence.id for evidence in evidence_items}
+        )
+        trace_steps.append(sink_step)
+        
+        # Create the exploit flow
+        flow = ExploitFlowModel(
+            description=finding.description or f"Exploit flow for {finding.name}",
+            trace=trace_steps,
+            status=StatusEnum.OPEN if finding.is_exploitable else StatusEnum.FALSE_POSITIVE_AFTER_REVALIDATION
+        )
+        
+        return flow, evidence_items
     
-    def _extract_steps_from_sarif(self, code_flows: List[Dict[str, Any]]) -> List[DataFlowStep]:
+    def _extract_steps_from_sarif(self, code_flows: List[Dict[str, Any]]) -> List[TraceStepModel]:
         """
         Extract data flow steps from SARIF code flows.
         
@@ -322,13 +395,13 @@ class ValidationEngine:
                                 elif i == len(thread_flow['locations']) - 1:
                                     step_type = "sink"
                                 
-                                code_loc = CodeLocation(
+                                code_loc = LocationModel(
                                     file_path=file_path,
                                     line_number=line_number,
                                     column=column
                                 )
                                 
-                                data_flow_step = DataFlowStep(
+                                data_flow_step = TraceStepModel(
                                     description=message,
                                     location=code_loc,
                                     step_type=step_type

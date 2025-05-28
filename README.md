@@ -186,9 +186,27 @@ cd ..
 
 ## ▶️ Running the Application
 
-### Quick Start
+### Quick Start (Recommended)
 
-The easiest way to start the application is to use the single script:
+The easiest and most reliable way to start the VXDF v1.0.0 application:
+
+```bash
+# One-command startup with automatic dependency installation and validation
+python3 start_vxdf.py
+```
+
+This comprehensive startup script will:
+- ✅ Check all prerequisites (Python 3.9+, Node.js, npm)
+- 📦 Install Python and Node.js dependencies automatically
+- 🔌 Verify port availability (6789 for backend, 3000 for frontend)
+- 🔧 Start the backend API server
+- 🎨 Start the frontend development server
+- 🧪 Run integration tests to verify everything works
+- 🎉 Provide clear status updates and error messages
+
+### Alternative: Shell Scripts
+
+You can also use the provided shell scripts for more control:
 
 ```bash
 # Start both backend and frontend with one command
@@ -196,21 +214,13 @@ The easiest way to start the application is to use the single script:
 
 # To stop all services
 ./scripts/stop-all.sh
+
+# Start individual services
+./scripts/start.sh              # Backend only
+./scripts/start-frontend.sh     # Frontend only
 ```
 
 The backend will be available at http://localhost:6789 and the frontend at http://localhost:3000.
-
-### Individual Services
-
-You can also start the services separately if needed:
-
-```bash
-# Start just the backend API
-./scripts/start.sh
-
-# In a separate terminal, start just the frontend
-./scripts/start-frontend.sh
-```
 
 ### Manual Setup
 

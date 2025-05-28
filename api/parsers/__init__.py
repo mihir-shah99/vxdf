@@ -4,6 +4,8 @@ VXDF Validate parsers for various input formats.
 from enum import Enum
 import logging
 
+from .sarif_parser import SarifParser
+
 logger = logging.getLogger(__name__)
 
 class ParserType(str, Enum):

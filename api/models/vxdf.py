@@ -987,6 +987,18 @@ class ManualVerificationDataModel(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class CommandExecutionOutputDataModel(BaseModel):
+    """Structured data for evidenceType: COMMAND_EXECUTION_OUTPUT."""
+    command: str = Field(..., description="The command that was executed.")
+    output: str = Field(..., description="The output produced by the command execution.")
+    exitCode: Optional[int] = Field(None, description="The exit code returned by the command.")
+    executionContext: Optional[str] = Field(None, description="Context in which the command was executed (e.g., 'Remote shell', 'Local terminal', 'Web shell').")
+    timestamp: Optional[datetime] = Field(None, description="Timestamp when the command was executed. Assumed to be UTC.")
+
+    model_config = {"extra": "forbid"}
+
+
+# Union type for all evidence data structures
 EvidenceDataVariantUnion = Union[
     HttpRequestLogDataModel,
     HttpResponseLogDataModel,
@@ -1009,6 +1021,7 @@ EvidenceDataVariantUnion = Union[
     ObservedBehaviorDataModel,
     DbStateChangeDataModel,
     FsChangeDataModel,
+    CommandExecutionOutputDataModel,
     ExfiltratedDataSampleDataModel,
     SessionInfoLeakDataModel,
     DifferentialAnalysisDataModel,
