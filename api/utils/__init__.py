@@ -1,4 +1,4 @@
 """
-VXDF Validate utility functions.
+Utility modules for the VXDF project.
 """
 
