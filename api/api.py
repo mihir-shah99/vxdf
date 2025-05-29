@@ -10,6 +10,7 @@ import logging
 import tempfile
 import datetime
 from typing import List, Dict, Any, Optional
+import json
 
 from flask import Blueprint, request, jsonify, current_app, send_file
 from flask_cors import CORS
@@ -17,6 +18,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from pydantic import ValidationError
 
 # Ensure models are imported first to get registered with declarative base
 from api.models.finding import Finding, Evidence
@@ -24,6 +26,7 @@ from api.models.database import SessionLocal, get_db
 from api.parsers import ParserType, get_parser
 from api.core.engine import ValidationEngine
 from api.config import OUTPUT_DIR, SUPPORTED_VULN_TYPES
+from marshmallow import Schema, fields
 
 # Create blueprint with a unique name
 api_bp = Blueprint('vxdf_api', __name__, url_prefix='/api')
@@ -123,6 +126,12 @@ def upload_file():
         required: false
         default: LOW
         description: Minimum severity to include
+      - name: strict
+        in: formData
+        type: boolean
+        required: false
+        default: false
+        description: Whether to perform strict validation
     responses:
       200:
         description: Upload and validation result
@@ -166,6 +175,9 @@ def upload_file():
     # Get minimum severity
     min_severity = request.form.get('min_severity', 'LOW')
     
+    # Get strict validation parameter
+    strict_validation = request.form.get('strict', 'false').lower() == 'true'
+    
     try:
         # Save file to temp directory
         _, temp_path = tempfile.mkstemp(suffix=secure_filename(file.filename))
@@ -207,14 +219,33 @@ def upload_file():
             result_findings.append(transform_finding_to_vulnerability(finding))
         
         return jsonify({
-            "success": True,
-            "message": f"Processed {len(findings)} findings",
-            "findings": result_findings,
-            "outputFile": output_filename
+            "message": "File processed successfully",
+            "vxdf_file": output_filename,
+            "validation_mode": "strict" if strict_validation else "normal",
+            "download_url": f"/download/{output_filename}"
         })
     
+    except ValueError as e:
+        # Handle strict validation failures
+        if "strict validation" in str(e).lower():
+            logger.error(f"Strict validation error: {e}")
+            return jsonify({
+                "error": "VXDF validation failed",
+                "details": str(e),
+                "validation_mode": "strict"
+            }), 400
+        else:
+            # Re-raise other ValueErrors
+            raise e
+    except ValidationError as e:
+        logger.error(f"Validation error: {e}")
+        return jsonify({
+            "error": "VXDF validation failed",
+            "details": str(e),
+            "validation_mode": "strict"
+        }), 400
     except Exception as e:
-        logger.error(f"Error processing upload: {e}", exc_info=True)
+        logger.error(f"Error processing file: {e}")
         return jsonify({"error": str(e)}), 500
     
     finally:
@@ -546,9 +577,103 @@ def get_supported_types():
         'vulnerabilityTypes': SUPPORTED_VULN_TYPES
     })
 
-# Add Swagger definitions for Vulnerability and Finding at the bottom of the file
-from marshmallow import Schema, fields
+@api_bp.route("/validate", methods=["POST"])
+def validate_vxdf():
+    """Validate an existing VXDF file against the schema.
+    ---
+    tags:
+      - VXDF Validation
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: file
+        in: formData
+        type: file
+        required: true
+        description: VXDF JSON file to validate
+    responses:
+      200:
+        description: VXDF file is valid
+        schema:
+          type: object
+          properties:
+            valid:
+              type: boolean
+              example: true
+            message:
+              type: string
+              example: "VXDF document is valid"
+            file:
+              type: string
+              example: "sample.vxdf.json"
+            exploit_flows:
+              type: integer
+              example: 2
+            evidence_count:
+              type: integer
+              example: 5
+      400:
+        description: VXDF file is invalid
+        schema:
+          type: object
+          properties:
+            valid:
+              type: boolean
+              example: false
+            error:
+              type: string
+              example: "Schema validation failed"
+            file:
+              type: string
+              example: "invalid.vxdf.json"
+    """
+    try:
+        # Check if file is present in request
+        if "file" not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+        
+        file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "No file selected"}), 400
+        
+        # Save uploaded file temporarily
+        filename = secure_filename(file.filename)
+        temp_path = Path(TEMP_DIR) / filename
+        file.save(temp_path)
+        
+        logger.info(f"Validating VXDF file: {filename}")
+        
+        # Initialize validation engine
+        engine = ValidationEngine()
+        
+        # Validate the VXDF file
+        validation_result = engine.validate_existing_vxdf(str(temp_path))
+        
+        # Clean up temp file
+        if temp_path.exists():
+            temp_path.unlink()
+        
+        if validation_result["is_valid"]:
+            return jsonify({
+                "valid": True,
+                "message": validation_result["message"],
+                "file": filename,
+                "exploit_flows": validation_result.get("exploit_flows", 0),
+                "evidence_count": validation_result.get("evidence_count", 0)
+            })
+        else:
+            return jsonify({
+                "valid": False,
+                "error": validation_result["error"],
+                "file": filename,
+                "failed_value": validation_result.get("failed_value")
+            }), 400
+    
+    except Exception as e:
+        logger.error(f"Error validating VXDF file: {e}")
+        return jsonify({"error": str(e)}), 500
 
+# Add Swagger definitions for Vulnerability and Finding at the bottom of the file
 class EvidenceSchema(Schema):
     id = fields.String()
     type = fields.String()

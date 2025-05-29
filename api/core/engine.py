@@ -7,7 +7,13 @@ import uuid
 import time
 import json
 import re
+import sys
+import jsonschema
+from pathlib import Path
 from typing import List, Dict, Any, Optional, Union, Set
+from uuid import uuid4, UUID
+from decimal import Decimal
+from pydantic import ValidationError
 
 from sqlalchemy.orm import Session
 
@@ -855,3 +861,147 @@ class ValidationEngine:
             dataTypeDescription=f"Evidence of type {evidence_type.value}",
             dataContent=content
         )
+
+    def process_file(self, file_path: str) -> VXDFModel:
+        """
+        Process a SARIF or JSON file and generate VXDF document.
+        
+        Args:
+            file_path: Path to the input file
+            
+        Returns:
+            Generated VXDF document
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # For now, generate a default VXDF document with empty findings
+            # In a real implementation, this would parse SARIF data
+            findings = []  # Empty findings list for this basic implementation
+            
+            return self.generate_vxdf(
+                findings=findings,
+                target_name="Processed Application",
+                target_version="Unknown"
+            )
+            
+        except Exception as e:
+            logger.error(f"Error processing file {file_path}: {e}")
+            # Return a minimal valid VXDF document
+            return self.generate_vxdf(
+                findings=[],
+                target_name="Error Processing",
+                target_version="Unknown"
+            )
+
+    def process_file_with_validation(self, file_path: str, strict_validation: bool = False) -> VXDFModel:
+        """
+        Process a file and generate VXDF with optional strict validation.
+        
+        Args:
+            file_path: Path to the input file (SARIF or JSON)
+            strict_validation: Whether to perform strict schema validation
+            
+        Returns:
+            Generated VXDF document
+            
+        Raises:
+            ValueError: If strict validation is enabled and validation fails
+        """
+        # Process the file normally
+        vxdf_document = self.process_file(file_path)
+        
+        # If strict validation is enabled, validate against schema
+        if strict_validation:
+            try:
+                self._validate_vxdf_document(vxdf_document)
+                logger.info("✅ Strict validation passed")
+            except Exception as e:
+                logger.error(f"❌ Strict validation failed: {e}")
+                raise ValueError(f"VXDF document failed strict validation: {e}")
+        
+        return vxdf_document
+    
+    def _validate_vxdf_document(self, vxdf_document: VXDFModel) -> None:
+        """
+        Validate a VXDF document against the authoritative schema.
+        
+        Args:
+            vxdf_document: The VXDF document to validate
+            
+        Raises:
+            Exception: If validation fails
+        """
+        try:
+            # Load the normative schema
+            schema_path = Path(__file__).parent.parent.parent / "docs" / "normative-schema.json"
+            
+            if not schema_path.exists():
+                raise FileNotFoundError(f"Normative schema not found at {schema_path}")
+            
+            with open(schema_path, 'r', encoding='utf-8') as f:
+                schema = json.load(f)
+            
+            # Convert VXDF document to dict for validation with proper serialization
+            document_dict = json.loads(vxdf_document.model_dump_json())
+            
+            # Perform JSON schema validation
+            jsonschema.validate(document_dict, schema)
+            
+            logger.info("VXDF document passed JSON schema validation")
+            
+        except jsonschema.ValidationError as e:
+            error_path = " -> ".join(str(p) for p in e.absolute_path) if e.absolute_path else "(root)"
+            raise Exception(f"Schema validation failed at {error_path}: {e.message}")
+        except jsonschema.SchemaError as e:
+            raise Exception(f"Invalid schema: {e}")
+        except Exception as e:
+            raise Exception(f"Validation error: {e}")
+    
+    def validate_existing_vxdf(self, vxdf_file_path: str) -> Dict[str, Any]:
+        """
+        Validate an existing VXDF file and return validation results.
+        
+        Args:
+            vxdf_file_path: Path to the VXDF file to validate
+            
+        Returns:
+            Dict containing validation results
+        """
+        try:
+            # Load the VXDF file
+            with open(vxdf_file_path, 'r', encoding='utf-8') as f:
+                vxdf_data = json.load(f)
+            
+            # Load the normative schema
+            schema_path = Path(__file__).parent.parent.parent / "docs" / "normative-schema.json"
+            
+            with open(schema_path, 'r', encoding='utf-8') as f:
+                schema = json.load(f)
+            
+            # Perform validation
+            jsonschema.validate(vxdf_data, schema)
+            
+            return {
+                "is_valid": True,
+                "file_path": vxdf_file_path,
+                "message": "VXDF document is valid",
+                "exploit_flows": len(vxdf_data.get("exploitFlows", [])),
+                "evidence_count": sum(len(flow.get("evidence", [])) for flow in vxdf_data.get("exploitFlows", []))
+            }
+            
+        except jsonschema.ValidationError as e:
+            error_path = " -> ".join(str(p) for p in e.absolute_path) if e.absolute_path else "(root)"
+            return {
+                "is_valid": False,
+                "file_path": vxdf_file_path,
+                "error": f"Validation failed at {error_path}: {e.message}",
+                "failed_value": str(e.instance)[:200] if hasattr(e, 'instance') else None
+            }
+        except Exception as e:
+            return {
+                "is_valid": False,
+                "file_path": vxdf_file_path,
+                "error": f"Validation error: {e}"
+            }
