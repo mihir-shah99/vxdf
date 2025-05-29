@@ -1110,54 +1110,43 @@ class ValidationItemModel(BaseModel):
 
 class ExploitFlowModel(BaseModel):
     """Describes a validated sequence of steps that demonstrate how a vulnerability can be exploited or how sensitive data flows through a system."""
-    flowId: Optional[UUID] = Field(default_factory=uuid4, description="Optional unique ID for this exploit flow.")
-    description: str = Field(..., description="A concise description summarizing this specific exploit flow or data path.")
-    trace: List[TraceStepModel] = Field(..., min_length=1, description="An ordered list of steps detailing the exploit flow or data path.")
-    status: StatusEnum = Field(..., description="The current status of this exploit flow (e.g., Open, Remediated).")
+    id: UUID = Field(..., description="Unique ID for this exploit flow.")
+    title: str = Field(..., description="A concise, human-readable title for the vulnerability.")
+    description: Optional[str] = Field(None, description="A concise description summarizing this specific exploit flow or data path.")
+    discoveryDate: Optional[datetime] = Field(None, description="The date and time when the vulnerability was first discovered or reported. Assumed to be UTC.")
+    disclosureDate: Optional[datetime] = Field(None, description="The date and time when the vulnerability was or is planned to be publicly disclosed. Assumed to be UTC.")
+    discoverySource: Optional[str] = Field(None, description="Information about how or from where the vulnerability was discovered.")
+    severity: SeverityModel = Field(..., description="The overall severity assessment for this vulnerability.")
+    category: str = Field(..., description="A high-level classification of the vulnerability type.")
+    cwes: Optional[Set[conint(gt=0)]] = Field(default_factory=set, description="A list of Common Weakness Enumeration (CWE) identifiers relevant to this vulnerability.")
+    validatedAt: datetime = Field(..., description="Timestamp of when this vulnerability was last validated as exploitable.")
+    source: Optional[LocationModel] = Field(None, description="The source location where untrusted data enters the system or where the vulnerability originates.")
+    sink: Optional[LocationModel] = Field(None, description="The sink location where the vulnerability is triggered or where sensitive data is exposed.")
+    trace: Optional[List[TraceStepModel]] = Field(None, description="An optional ordered list of steps detailing the exploit flow or data path.")
+    status: Optional[StatusEnum] = Field(StatusEnum.OPEN, description="The current status of this exploit flow (e.g., Open, Remediated).")
     exploitabilityAssessment: Optional[ExploitabilityAssessmentModel] = Field(None, description="An assessment of how easy or likely this specific flow is to be exploited.")
     validationHistory: Optional[List[ValidationItemModel]] = Field(default_factory=list, description="A chronological record of validation attempts and findings related to this flow.")
     affectedComponents: Optional[List[AffectedComponentModel]] = Field(default_factory=list, description="Components specifically involved or affected by this exploit flow.")
     remediationRecommendations: Optional[str] = Field(None, description="Specific remediation advice or recommendations for this exploit flow.")
+    evidence: List[EvidenceModel] = Field(..., min_length=1, description="Evidence supporting the exploitability of this vulnerability.")
+    tags: Optional[Set[str]] = Field(default_factory=set, description="A list of keywords or tags for categorizing or filtering the vulnerability.")
+    owaspTopTenCategories: Optional[Set[str]] = Field(default_factory=set, description="Relevant OWASP Top Ten categories.")
+    references: Optional[Set[HttpUrl]] = Field(default_factory=set, description="A list of URLs to external advisories, write-ups, or other relevant resources.")
     primaryExploitScenario: Optional[bool] = Field(None, description="Indicates if this flow is considered the primary or most representative exploit scenario among multiple flows for a single vulnerability.")
     customProperties: Optional[Dict[str, Any]] = Field(None, description="A key-value map for additional custom information about this exploit flow.")
 
     model_config = {"extra": "forbid"}
 
 
-class VulnerabilityDetailsModel(BaseModel):
-    """Contains all detailed information about a single, validated vulnerability finding."""
-    vulnerabilityId: str = Field(..., description="A unique identifier for this vulnerability finding (e.g., internal tracking ID).")
-    alternateIds: Optional[Set[str]] = Field(default_factory=set, description="A list of alternative identifiers (e.g., CVE, GHSA, bug tracker IDs).")
-    title: str = Field(..., description="A concise, human-readable title for the vulnerability.")
-    description: str = Field(..., description="A detailed description of the vulnerability, its nature, and potential impact.")
-    discoveryDate: datetime = Field(default_factory=datetime.utcnow, description="The date and time when the vulnerability was first discovered or reported. Assumed to be UTC.")
-    disclosureDate: Optional[datetime] = Field(None, description="The date and time when the vulnerability was or is planned to be publicly disclosed. Assumed to be UTC.")
-    discoverySource: Optional[str] = Field(None, description="Information about how or from where the vulnerability was discovered (e.g., 'Internal SAST', 'Bug Bounty Program', specific tool name).")
-    severity: SeverityModel = Field(..., description="The overall severity assessment for this vulnerability.")
-    exploitFlows: List[ExploitFlowModel] = Field(..., min_length=1, description="One or more detailed exploit flows or data paths demonstrating the vulnerability.")
-    affectedApplications: Optional[List[ApplicationInfo]] = Field(default_factory=list, description="Information about the applications, systems, or components affected by this vulnerability.")
-    tags: Optional[Set[str]] = Field(default_factory=set, description="A list of keywords or tags for categorizing or filtering the vulnerability.")
-    cwes: Optional[Set[conint(gt=0)]] = Field(default_factory=set, description="A list of Common Weakness Enumeration (CWE) identifiers relevant to this vulnerability (e.g., [79, 89]).")
-    owaspTopTenCategories: Optional[Set[str]] = Field(default_factory=set, description="Relevant OWASP Top Ten categories (e.g., 'A01:2021-Broken Access Control').")
-    references: Optional[Set[HttpUrl]] = Field(default_factory=set, description="A list of URLs to external advisories, write-ups, or other relevant resources.")
-    remediationInfo: Optional[RemediationModel] = Field(None, description="Detailed information and recommendations for remediating the vulnerability.")
-    customProperties: Optional[Dict[str, Any]] = Field(None, description="A key-value map for additional custom information about this vulnerability.")
-
-    model_config = {"extra": "forbid"}
-
-# Next Pydantic Models based on the schema will be added here.
-# Main VXDF Document Structure
-# ... existing code ...
-
 # --- Main VXDF Document Structure --- #
 class VXDFModel(BaseModel):
     """The root model for a Validated Exploitable Data Flow (VXDF) document."""
-    vxdfVersion: Literal["1.0.0"] = Field("1.0.0", description="The version of the VXDF specification to which this document conforms. MUST be '1.0.0'.")
-    documentId: UUID = Field(default_factory=uuid4, description="A unique identifier for this VXDF document instance.")
-    generatedAt: datetime = Field(default_factory=datetime.utcnow, description="The timestamp indicating when this VXDF document was generated. Assumed to be UTC.")
-    generatorToolInfo: Optional[GeneratorToolInfo] = Field(None, description="Information about the tool that generated this VXDF document.")
-    vulnerability: VulnerabilityDetailsModel = Field(..., description="The detailed information about the validated vulnerability finding.")
-    evidencePool: Optional[List[EvidenceModel]] = Field(default_factory=list, description="A pool of all evidence items referenced within this document. Ensures evidence can be defined once and referenced multiple times by its UUID.")
+    vxdfVersion: Literal["1.0.0"] = Field(..., description="The version of the VXDF specification to which this document conforms. MUST be '1.0.0'.")
+    id: UUID = Field(..., description="A unique identifier for this VXDF document instance.")
+    generatedAt: datetime = Field(..., description="The timestamp indicating when this VXDF document was generated. Assumed to be UTC.")
+    generatorTool: Optional[GeneratorToolInfo] = Field(None, description="Information about the tool that generated this VXDF document.")
+    applicationInfo: Optional[ApplicationInfo] = Field(None, description="Information about the application, system, or component that was the target of the assessment.")
+    exploitFlows: List[ExploitFlowModel] = Field(..., min_length=1, description="One or more detailed exploit flows or data paths demonstrating vulnerabilities.")
     customProperties: Optional[Dict[str, Any]] = Field(None, description="A key-value map for top-level custom information related to this VXDF document.")
 
     model_config = {"extra": "forbid"}
@@ -1173,42 +1162,3 @@ class VXDFModel(BaseModel):
 
 # Consider adding validators, e.g., for ensuring evidenceRefs in various models point to valid UUIDs in the evidencePool.
 # This would be more advanced validation logic beyond basic schema conformance.
-
-# --- Backward Compatibility Aliases --- #
-# These aliases maintain compatibility with existing code that expects the old model names
-
-# Main document alias
-VXDFDocument = VXDFModel
-
-# Metadata is now part of the main document, but we can create a simple alias
-# The old VXDFMetadata was likely simpler, so we'll create a basic model
-class VXDFMetadata(BaseModel):
-    """Legacy metadata model for backward compatibility."""
-    generator_version: str
-    target_application: str
-    target_version: Optional[str] = None
-    
-    model_config = {"extra": "allow"}
-
-# Flow alias - the old VXDFFlow is now ExploitFlowModel
-VXDFFlow = ExploitFlowModel
-
-# Summary model for backward compatibility
-class VXDFSummary(BaseModel):
-    """Legacy summary model for backward compatibility."""
-    total_flows: int = 0
-    exploitable_flows: int = 0
-    
-    model_config = {"extra": "allow"}
-
-# Location alias - the old CodeLocation is now LocationModel
-CodeLocation = LocationModel
-
-# Step alias - the old DataFlowStep is now TraceStepModel  
-DataFlowStep = TraceStepModel
-
-# Evidence alias - the old EvidenceItem is now EvidenceModel
-EvidenceItem = EvidenceModel
-
-# Severity alias - the old SeverityLevel is now SeverityLevelEnum
-SeverityLevel = SeverityLevelEnum

