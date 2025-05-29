@@ -231,7 +231,7 @@ class ValidationEngine:
                 # Mark as unvalidated but still process
                 finding.is_exploitable = None  # Unknown
             
-            flow, flow_evidence = self._create_exploit_flow_from_finding(finding)
+            flow = self._create_exploit_flow_from_finding(finding)
             exploit_flows.append(flow)
         
         # If no exploit flows were created, create a default one with required evidence
@@ -270,7 +270,7 @@ class ValidationEngine:
             )
             exploit_flows.append(default_flow)
         
-        # Create VXDF document with the new structure
+        # Create VXDF document with the corrected structure - direct exploitFlows 
         vxdf_doc = VXDFModel(
             vxdfVersion="1.0.0",
             id=uuid.uuid4(),
@@ -282,7 +282,7 @@ class ValidationEngine:
         
         return vxdf_doc
     
-    def _create_exploit_flow_from_finding(self, finding: Finding) -> tuple[ExploitFlowModel, List[EvidenceModel]]:
+    def _create_exploit_flow_from_finding(self, finding: Finding) -> ExploitFlowModel:
         """
         Create a VXDF v1.0.0 exploit flow from a finding.
         
@@ -290,7 +290,7 @@ class ValidationEngine:
             finding: Finding to convert
             
         Returns:
-            Tuple of (ExploitFlowModel, List of EvidenceModel)
+            ExploitFlowModel
         """
         # Create evidence items using comprehensive parsing
         evidence_items = []
@@ -439,7 +439,7 @@ class ValidationEngine:
             references=set()
         )
         
-        return flow, evidence_items
+        return flow
     
     def _extract_steps_from_sarif(self, code_flows: List[Dict[str, Any]]) -> List[TraceStepModel]:
         """
