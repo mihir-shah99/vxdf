@@ -1,226 +1,306 @@
 # VXDF Frontend
 
-This directory contains the React/TypeScript frontend for VXDF Validate.
+This directory contains the React/TypeScript frontend for the VXDF (Validated eXploitable Data Flow) system, featuring a modern UI with comprehensive **evidence viewing and management capabilities**.
 
-## Quickstart
+## 🚀 Enhanced Features
 
+### **Evidence Management Interface**
+- ✅ **Evidence Viewer** - Comprehensive inspection of 30+ evidence types
+- ✅ **File Upload Interface** - Support for scanner reports and individual evidence files
+- ✅ **Real-time Evidence Display** - Dynamic loading of evidence data with structured formatting
+- ✅ **Evidence Type Filtering** - Filter findings by evidence type and validation status
+- ✅ **Visual Evidence Support** - Built-in screenshot and visual proof viewers
+
+### **Modern UI/UX**
+- ✅ **React 18** with TypeScript for type safety
+- ✅ **Vite** for fast development and optimized builds
+- ✅ **Responsive Design** - Mobile-friendly interface
+- ✅ **Real-time Updates** - Dynamic dashboard with live statistics
+- ✅ **Intuitive Navigation** - Streamlined evidence workflow
+
+## 📁 Directory Structure
+
+```
+frontend/
+├── public/                  # Static assets
+│   ├── index.html          # Main HTML template
+│   └── favicon.ico         # Application icon
+├── src/                    # Source code
+│   ├── components/         # React components
+│   │   ├── Dashboard/      # Dashboard components with evidence metrics
+│   │   ├── EvidenceViewer/ # NEW: Evidence viewing components
+│   │   ├── FileUpload/     # Enhanced file upload with evidence support
+│   │   ├── FindingsTable/  # Findings table with evidence counts
+│   │   └── common/         # Shared UI components
+│   ├── config/            # Configuration files
+│   │   └── sidebarConfig.ts # Sidebar navigation configuration
+│   ├── hooks/             # Custom React hooks
+│   │   ├── useApi.ts      # Enhanced API hooks for evidence
+│   │   └── useEvidence.ts # NEW: Evidence-specific hooks
+│   ├── pages/             # Page components
+│   │   ├── Dashboard.tsx  # Main dashboard with evidence stats
+│   │   ├── Upload.tsx     # Enhanced upload page
+│   │   └── Evidence.tsx   # NEW: Evidence management page
+│   ├── services/          # API service layer
+│   │   ├── api.ts         # Enhanced API client with evidence endpoints
+│   │   └── evidence.ts    # NEW: Evidence-specific API services
+│   ├── types/             # TypeScript type definitions
+│   │   ├── vxdf.ts        # VXDF type definitions
+│   │   └── evidence.ts    # NEW: Evidence type definitions
+│   ├── utils/             # Utility functions
+│   │   ├── formatters.ts  # Data formatting utilities
+│   │   └── evidenceHelpers.ts # NEW: Evidence processing utilities
+│   ├── assets/            # Images and other assets
+│   ├── App.tsx            # Main application component
+│   └── main.tsx           # Application entry point
+├── package.json           # NPM dependencies and scripts
+├── tsconfig.json          # TypeScript configuration
+├── vite.config.ts         # Vite configuration with API proxy
+└── README.md              # This file
+```
+
+## 🔌 API Integration
+
+### **Enhanced API Proxy Configuration**
+
+The frontend is configured to proxy API requests to the backend running on port 5001:
+
+```typescript
+// vite.config.ts
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
+})
+```
+
+### **Evidence-Specific Endpoints**
+
+The frontend integrates with enhanced API endpoints:
+
+- `POST /api/upload` - Enhanced with external evidence JSON support
+- `POST /api/findings/{finding_id}/attach_evidence_file` - Individual evidence upload
+- `GET /api/findings` - List findings with evidence counts
+- `GET /api/findings/{finding_id}/evidence` - Retrieve finding evidence
+- `GET /api/supported-types` - Get supported evidence types
+
+## 🧩 Key Components
+
+### **Enhanced Dashboard (`src/pages/Dashboard.tsx`)**
+Real-time dashboard featuring:
+
+- **Evidence Metrics**: Total evidence items, types distribution
+- **Finding Statistics**: Findings with evidence vs. without evidence
+- **Validation Status**: Evidence validation success rates
+- **Interactive Charts**: Evidence type distribution and trends
+
+### **Evidence Viewer (`src/components/EvidenceViewer/`)**
+Comprehensive evidence viewing system:
+
+- **Type-Specific Renderers**: Custom views for each of 30+ evidence types
+- **Structured Data Display**: JSON/XML formatted evidence data
+- **Visual Evidence Support**: Screenshot and file viewers
+- **Evidence Timeline**: Chronological evidence ordering
+
+### **Enhanced File Upload (`src/components/FileUpload/`)**
+Advanced upload interface supporting:
+
+- **Scanner Report Upload**: SARIF, DAST, CycloneDX with evidence JSON
+- **Individual Evidence Upload**: Direct evidence file attachment
+- **Evidence Type Selection**: Dropdown with all supported types
+- **Progress Tracking**: Real-time upload progress and validation
+
+### **Findings Table (`src/components/FindingsTable/`)**
+Enhanced findings display:
+
+- **Evidence Count Columns**: Visual indicators of evidence quantity
+- **Evidence Type Badges**: Quick evidence type identification
+- **Validation Status Icons**: Evidence validation state display
+- **Interactive Filtering**: Filter by evidence presence and type
+
+## 🎨 UI/UX Features
+
+### **Responsive Design**
+- Mobile-first approach with breakpoints for tablet and desktop
+- Adaptive layouts for evidence viewing on different screen sizes
+- Touch-friendly interface for mobile evidence inspection
+
+### **Evidence-Specific UI Elements**
+- **Code Syntax Highlighting** for code snippet evidence
+- **HTTP Request/Response Viewers** with formatted headers and payloads
+- **Screenshot Galleries** with zoom and navigation
+- **Log Entry Formatters** with timestamp and severity highlighting
+
+### **Accessibility**
+- WCAG 2.1 AA compliance for evidence viewers
+- Keyboard navigation for all evidence interfaces
+- Screen reader support for evidence descriptions
+- High contrast mode for visual evidence inspection
+
+## 🚀 Development Setup
+
+### **Prerequisites**
+- Node.js 16+ and npm
+- Backend API running on http://localhost:5001
+
+### **Installation**
 ```bash
+cd frontend
 npm install
+```
+
+### **Development Server**
+```bash
 npm run dev
 ```
 
-- The frontend runs on [http://localhost:3000](http://localhost:3000) by default.
-- API requests to `/api/*` are proxied to the backend at `http://localhost:5001`.
+The frontend will be available at http://localhost:3000 with:
+- Hot module replacement for instant updates
+- API proxy to backend automatically configured
+- Source maps for debugging
 
-## Troubleshooting
-- If you see proxy errors, make sure the backend is running on port 5001.
-- If you see port conflicts, kill any processes using ports 3000 or 5001:
-  ```bash
-  lsof -ti:5001,3000 | xargs kill -9
-  ```
-
-## Makefile
-- `make dev` — Start backend and frontend together
-- `make check` — Run health checks on API endpoints
-
-## Environment
-- See `.env.example` for environment variables.
-
-## Architecture Overview
-
-The frontend is built using a component-based architecture that prioritizes modularity, reusability, and type safety. It's designed to provide a seamless user experience while efficiently communicating with the VXDF API backend.
-
-```
-┌──────────────────────────────────────────────┐
-│                  Components                   │
-│                                              │
-│ ┌─────────┐ ┌──────────┐ ┌────────────────┐ │
-│ │ Header  │ │ Sidebar  │ │ Dashboard      │ │
-│ └─────────┘ └──────────┘ └────────────────┘ │
-│                                              │
-│ ┌─────────────────┐ ┌─────────────────────┐ │
-│ │ FileUpload      │ │ VulnerabilityDetail │ │
-│ └─────────────────┘ └─────────────────────┘ │
-└──────────────────────────────────────────────┘
-                      │
-                      ▼
-┌──────────────────────────────────────────────┐
-│                  Services                     │
-│                                              │
-│ ┌─────────────────┐ ┌─────────────────────┐ │
-│ │ API Clients     │ │ Report Generator    │ │
-│ └─────────────────┘ └─────────────────────┘ │
-└──────────────────────────────────────────────┘
-                      │
-                      ▼
-┌──────────────────────────────────────────────┐
-│                  Utilities                    │
-│                                              │
-│ ┌─────────────────┐ ┌─────────────────────┐ │
-│ │ Parsers         │ │ Validators          │ │
-│ └─────────────────┘ └─────────────────────┘ │
-└──────────────────────────────────────────────┘
+### **Production Build**
+```bash
+npm run build
+npm run preview
 ```
 
-## Core Components
+## 📊 Performance Optimizations
 
-### 1. Entry Points
+### **Frontend Optimizations**
+- **Code Splitting**: Lazy loading of evidence viewer components
+- **Memoization**: React.memo for expensive evidence rendering
+- **Virtual Scrolling**: Efficient handling of large evidence lists
+- **Image Optimization**: Automatic compression for screenshot evidence
 
-- **`main.tsx`**: Application entry point that bootstraps the React application and mounts it to the DOM.
-- **`App.tsx`**: Main component that handles application state and routing between different views.
+### **API Efficiency**
+- **Request Batching**: Combined evidence and finding requests
+- **Caching**: Local storage for evidence type definitions
+- **Pagination**: Efficient loading of large evidence datasets
+- **Compression**: Gzip compression for evidence data transfer
 
-### 2. UI Components
+## 🧪 Testing Integration
 
-- **`Dashboard.tsx`**: Displays summary statistics and a list of validated vulnerabilities.
-- **`FileUpload.tsx`**: Handles file selection, upload, and validation initiation.
-- **`VulnerabilityDetail.tsx`**: Shows detailed information about a specific vulnerability, including its data flow and evidence.
-- **`Header.tsx`**: Application header with navigation and user information.
-- **`Sidebar.tsx`**: Navigation sidebar for switching between different views.
+### **Component Testing**
+```bash
+# Run frontend tests
+npm test
 
-### 3. API Integration (`src/api/`)
+# Test evidence viewer components
+npm test -- --grep "EvidenceViewer"
 
-- **`validateVulnerability.ts`**: Client for the vulnerability validation API, which sends findings to the backend for analysis.
+# Test upload functionality
+npm test -- --grep "FileUpload"
+```
 
-### 4. Types (`src/types/`)
+### **End-to-End Testing**
+The frontend supports comprehensive E2E testing scenarios:
+- Evidence upload and viewing workflows
+- Finding navigation with evidence inspection
+- Evidence type filtering and search
+- Visual regression testing for evidence displays
 
-- **`core.ts`**: Core type definitions including interfaces for vulnerabilities, validation results, and VXDF structure.
+## 🔧 Configuration
 
-### 5. Parsers (`src/parsers/`)
+### **Environment Variables**
 
-- **`SARIFParser.ts`**: Parser for Static Analysis Results Interchange Format (SARIF) files.
+Create `.env.local` for local development:
 
-### 6. Services (`src/services/`)
+```env
+VITE_API_BASE_URL=http://localhost:5001
+VITE_EVIDENCE_MAX_FILE_SIZE=52428800
+VITE_SUPPORTED_EVIDENCE_TYPES=30+
+```
 
-- **`ReportGenerator.ts`**: Service for generating detailed reports from validation results.
+### **API Configuration**
 
-### 7. Utilities (`src/utils/`)
+The frontend automatically detects and configures:
+- Backend API endpoint (http://localhost:5001)
+- Supported evidence types from `/api/supported-types`
+- File upload limits and formats
+- Evidence validation schemas
 
-Various utility functions for data transformation, formatting, and other common operations.
+### **UI Configuration**
 
-## Component Architecture
+Customize the interface via `src/config/`:
+- Sidebar navigation with evidence sections
+- Evidence type color coding
+- Dashboard widget configuration
+- Upload form field definitions
 
-The frontend follows a hierarchical component structure:
+## 🐛 Troubleshooting
 
-1. **App (Root Component)**
-   - Maintains global application state
-   - Handles routing between different views
-   - Manages authentication state (when applicable)
+### **Common Issues**
 
-2. **View Components**
-   - Dashboard: Displays summary statistics and lists
-   - Upload: Handles file uploads and scan initiation
-   - Detailed views for specific vulnerabilities
+1. **API Connection Issues**
+```bash
+# Verify backend is running
+curl http://localhost:5001/api/stats
 
-3. **Reusable Components**
-   - UI elements like buttons, cards, dialogs
-   - Data display components like tables and charts
-   - Form elements for user input
+# Check proxy configuration
+cat vite.config.ts
+```
 
-## State Management
+2. **Evidence Viewer Issues**
+```bash
+# Clear browser cache
+# Refresh evidence type definitions
+# Check console for JavaScript errors
+```
 
-The application uses React's built-in state management through:
-- Component-level state with `useState` for local UI state
-- Context API for sharing state between components (when needed)
-- Props for passing data down the component tree
+3. **Upload Problems**
+```bash
+# Verify file size limits
+# Check evidence type spelling
+# Ensure proper form encoding
+```
 
-## Data Flow
+### **Development Issues**
 
-1. **Input Processing**:
-   - Users upload security scan files through the FileUpload component.
-   - The appropriate parser (e.g., SARIFParser) processes the file and extracts vulnerabilities.
-   - Extracted vulnerabilities are sent to the backend API for validation.
+1. **Port Conflicts**
+```bash
+# Kill processes on frontend port
+lsof -ti:3000 | xargs kill -9
+```
 
-2. **Validation Display**:
-   - The Dashboard component shows validation progress and results.
-   - Statistical summaries are displayed in cards at the top.
-   - A table lists individual vulnerabilities with key information.
+2. **Module Resolution**
+```bash
+# Clear node modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
 
-3. **Detailed Analysis**:
-   - The VulnerabilityDetail component shows comprehensive information about each vulnerability.
-   - Data flow visualization shows the path from source to sink.
-   - Evidence collected during validation is displayed.
-   - Remediation guidance is provided for confirmed vulnerabilities.
+## 📚 Documentation
 
-## Type System
+- **[Component Documentation](./docs/COMPONENTS.md)** - Detailed component reference
+- **[Evidence Viewer Guide](./docs/EVIDENCE_VIEWER.md)** - Evidence viewing documentation
+- **[API Integration](./docs/API_INTEGRATION.md)** - Frontend-backend integration
+- **[Styling Guide](./docs/STYLING.md)** - UI/UX design guidelines
 
-The application uses TypeScript for type safety with key interfaces:
+## 🤝 Contributing
 
-- **Vulnerability**: Represents a security finding with source, sink, and metadata.
-- **Evidence**: Proof of exploitability collected during validation.
-- **VXDFReport & VXDFFlow**: Structures matching the VXDF output format.
-- **ValidationStatus**: Enum representing the status of validation (Exploitable, Not Exploitable, etc.).
+### **Development Guidelines**
+1. Follow React/TypeScript best practices
+2. Add tests for new evidence viewer components
+3. Ensure responsive design for new features
+4. Document evidence-specific UI components
+5. Maintain backward compatibility
 
-## Styling
+### **Evidence Viewer Development**
+1. Create type-specific viewer components for new evidence types
+2. Add proper TypeScript types for evidence data
+3. Include accessibility features for new viewers
+4. Test with real evidence data samples
 
-The frontend uses Tailwind CSS for styling:
-- Utility-first approach for rapid UI development
-- Consistent design system with customizable theme
-- Responsive design that works across devices
-- Dark/light mode support
+---
 
-## Build System
+## 📝 License
 
-The application uses Vite as its build tool:
-- Fast development server with Hot Module Replacement (HMR)
-- Optimized production builds
-- TypeScript and React integration
-- CSS post-processing with PostCSS
-
-## Configuration Files
-
-- **`package.json`**: Dependencies and scripts
-- **`tsconfig.json`**: TypeScript configuration
-- **`vite.config.ts`**: Vite build configuration
-- **`tailwind.config.js`**: Tailwind CSS customization
-- **`eslint.config.js`**: ESLint configuration for code quality
-
-## Key Dependencies
-
-- **React**: UI library for building component-based interfaces
-- **TypeScript**: Type-safe JavaScript
-- **Tailwind CSS**: Utility-first CSS framework
-- **Lucide React**: Icon library
-- **Vite**: Build tool and development server
-
-## Integration with VXDF API
-
-The frontend communicates with the VXDF API backend through RESTful APIs:
-
-1. **File Upload**: Security scan results are uploaded to the API.
-2. **Validation Requests**: Specific vulnerabilities are sent for validation.
-3. **Status Polling**: The frontend checks validation progress.
-4. **Results Retrieval**: Validated findings are fetched and displayed.
-
-## User Interface Features
-
-1. **Dashboard**:
-   - Summary cards showing validation statistics
-   - Table of vulnerabilities with filtering and sorting
-   - Status indicators for each vulnerability
-
-2. **File Upload**:
-   - Drag-and-drop interface
-   - File format validation
-   - Upload progress indication
-   - Parser selection based on file type
-
-3. **Vulnerability Details**:
-   - Source and sink code display
-   - Data flow visualization
-   - Evidence presentation with formatting
-   - Remediation recommendations
-
-## Browser Compatibility
-
-The application is designed to work on modern browsers:
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-
-## Future Extensibility
-
-The frontend is designed for easy extension:
-1. **Additional Parsers**: New parser implementations can be added for other security tool formats.
-2. **Enhanced Visualizations**: The component architecture allows for adding more sophisticated visualizations.
-3. **Authentication & Authorization**: Infrastructure is in place to add user management when needed.
-4. **Offline Support**: The application can be extended with service workers for offline capabilities. 
+This project is licensed under the Apache License 2.0. 
