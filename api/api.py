@@ -15,6 +15,7 @@ import json
 from flask import Blueprint, request, jsonify, current_app, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -26,6 +27,10 @@ from api.models.database import SessionLocal, get_db
 from api.parsers import ParserType, get_parser
 from api.core.engine import ValidationEngine
 from api.config import OUTPUT_DIR, SUPPORTED_VULN_TYPES
+from api.utils.evidence_handler import (
+    FindingMatcher, EvidenceProcessor, 
+    create_evidence_from_structured_data, create_evidence_from_file_upload
+)
 from marshmallow import Schema, fields
 
 # Create blueprint with a unique name
@@ -79,7 +84,7 @@ def transform_finding_to_vulnerability(finding: Finding) -> dict:
 @api_bp.route('/upload', methods=['POST'])
 def upload_file():
     """
-    Upload a security scan file for validation and processing.
+    Upload a security scan file for validation and processing, with optional external evidence.
     ---
     tags:
       - Upload
@@ -132,6 +137,11 @@ def upload_file():
         required: false
         default: false
         description: Whether to perform strict validation
+      - name: external_evidence_json
+        in: formData
+        type: string
+        required: false
+        description: JSON string containing array of external evidence items
     responses:
       200:
         description: Upload and validation result
@@ -148,6 +158,9 @@ def upload_file():
                 $ref: '#/definitions/Vulnerability'
             outputFile:
               type: string
+            evidenceProcessed:
+              type: integer
+              description: Number of external evidence items processed
       400:
         description: Bad request
       500:
@@ -166,6 +179,7 @@ def upload_file():
     validate = request.form.get('validate', 'true') == 'true'
     target_name = request.form.get('target_name', 'Unknown Application')
     target_version = request.form.get('target_version', '')
+    external_evidence_json = request.form.get('external_evidence_json')
     
     # Get vulnerability types to process
     vuln_types = request.form.getlist('vuln_types')
@@ -178,7 +192,14 @@ def upload_file():
     # Get strict validation parameter
     strict_validation = request.form.get('strict', 'false').lower() == 'true'
     
+    temp_path = None
+    db_session = None
+    evidence_processed_count = 0
+    
     try:
+        # Create database session
+        db_session = SessionLocal()
+        
         # Save file to temp directory
         _, temp_path = tempfile.mkstemp(suffix=secure_filename(file.filename))
         file.save(temp_path)
@@ -189,6 +210,98 @@ def upload_file():
         # Parse file
         parser = get_parser(ParserType(parser_type))
         findings = parser.parse_file(temp_path)
+        
+        # Store findings in database for evidence linking
+        db_findings = []
+        for finding in findings:
+            db_finding = Finding(
+                source_id=finding.source_id,
+                source_type=finding.source_type or parser_type,
+                vulnerability_type=finding.vulnerability_type,
+                name=finding.name,
+                description=finding.description,
+                severity=finding.severity,
+                cvss_score=finding.cvss_score,
+                cwe_id=finding.cwe_id,
+                file_path=finding.file_path,
+                line_number=finding.line_number,
+                column=finding.column,
+                raw_data=finding.raw_data if hasattr(finding, 'raw_data') else None
+            )
+            db_session.add(db_finding)
+            db_findings.append(db_finding)
+        
+        # Flush to get IDs for findings
+        db_session.flush()
+        
+        # Process external evidence if provided
+        if external_evidence_json:
+            try:
+                external_evidence_list = json.loads(external_evidence_json)
+                if not isinstance(external_evidence_list, list):
+                    raise ValueError("external_evidence_json must be an array of evidence items")
+                
+                for evidence_item in external_evidence_list:
+                    try:
+                        # Validate evidence item structure
+                        if not isinstance(evidence_item, dict):
+                            logger.warning("Skipping invalid evidence item: not a dictionary")
+                            continue
+                        
+                        if 'findingMatcher' not in evidence_item:
+                            logger.warning("Skipping evidence item: missing findingMatcher")
+                            continue
+                        
+                        if 'evidenceType' not in evidence_item:
+                            logger.warning("Skipping evidence item: missing evidenceType")
+                            continue
+                        
+                        if 'description' not in evidence_item:
+                            logger.warning("Skipping evidence item: missing description")
+                            continue
+                        
+                        if 'data' not in evidence_item:
+                            logger.warning("Skipping evidence item: missing data")
+                            continue
+                        
+                        # Find matching findings
+                        matched_findings = FindingMatcher.match_finding(
+                            evidence_item['findingMatcher'], 
+                            db_findings
+                        )
+                        
+                        if not matched_findings:
+                            logger.warning(f"No findings matched for evidence item with matcher: {evidence_item['findingMatcher']}")
+                            continue
+                        
+                        # Create evidence for each matched finding
+                        for matched_finding in matched_findings:
+                            try:
+                                evidence = create_evidence_from_structured_data(
+                                    matched_finding, evidence_item, db_session
+                                )
+                                evidence_processed_count += 1
+                                logger.info(f"Created evidence {evidence.id} for finding {matched_finding.id}")
+                            except Exception as e:
+                                logger.error(f"Failed to create evidence for finding {matched_finding.id}: {e}")
+                                continue
+                    
+                    except Exception as e:
+                        logger.error(f"Error processing evidence item: {e}")
+                        continue
+            
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in external_evidence_json: {e}")
+                return jsonify({
+                    "error": "Invalid JSON format in external_evidence_json",
+                    "details": str(e)
+                }), 400
+            except Exception as e:
+                logger.error(f"Error processing external evidence: {e}")
+                # Continue processing without external evidence
+        
+        # Commit database changes
+        db_session.commit()
         
         # Filter findings
         if vuln_types or min_severity != 'INFORMATIONAL':
@@ -218,17 +331,25 @@ def upload_file():
         for finding in findings:
             result_findings.append(transform_finding_to_vulnerability(finding))
         
-        return jsonify({
+        response_data = {
             "message": "File processed successfully",
             "vxdf_file": output_filename,
             "validation_mode": "strict" if strict_validation else "normal",
             "download_url": f"/download/{output_filename}"
-        })
+        }
+        
+        if evidence_processed_count > 0:
+            response_data["evidenceProcessed"] = evidence_processed_count
+            response_data["message"] += f" with {evidence_processed_count} external evidence items"
+        
+        return jsonify(response_data)
     
     except ValueError as e:
         # Handle strict validation failures
         if "strict validation" in str(e).lower():
             logger.error(f"Strict validation error: {e}")
+            if db_session:
+                db_session.rollback()
             return jsonify({
                 "error": "VXDF validation failed",
                 "details": str(e),
@@ -239,6 +360,8 @@ def upload_file():
             raise e
     except ValidationError as e:
         logger.error(f"Validation error: {e}")
+        if db_session:
+            db_session.rollback()
         return jsonify({
             "error": "VXDF validation failed",
             "details": str(e),
@@ -246,12 +369,18 @@ def upload_file():
         }), 400
     except Exception as e:
         logger.error(f"Error processing file: {e}")
+        if db_session:
+            db_session.rollback()
         return jsonify({"error": str(e)}), 500
     
     finally:
         # Clean up temp file
-        if Path(temp_path).exists():
+        if temp_path and Path(temp_path).exists():
             os.unlink(temp_path)
+        
+        # Close database session
+        if db_session:
+            db_session.close()
 
 @api_bp.route('/download/<filename>', methods=['GET'])
 def download_vxdf(filename: str):
@@ -638,7 +767,7 @@ def validate_vxdf():
         
         # Save uploaded file temporarily
         filename = secure_filename(file.filename)
-        temp_path = Path(TEMP_DIR) / filename
+        temp_path = Path(tempfile.gettempdir()) / filename
         file.save(temp_path)
         
         logger.info(f"Validating VXDF file: {filename}")
@@ -672,6 +801,197 @@ def validate_vxdf():
     except Exception as e:
         logger.error(f"Error validating VXDF file: {e}")
         return jsonify({"error": str(e)}), 500
+
+@api_bp.route('/findings/<finding_id>/attach_evidence_file', methods=['POST'])
+def attach_evidence_file(finding_id: str):
+    """
+    Attach an evidence file to an existing finding.
+    ---
+    tags:
+      - Evidence
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: finding_id
+        in: path
+        type: string
+        required: true
+        description: ID of the finding to attach evidence to
+      - name: evidence_file
+        in: formData
+        type: file
+        required: true
+        description: The evidence file to upload
+      - name: evidence_type_str
+        in: formData
+        type: string
+        required: true
+        description: Type of evidence (must be valid EvidenceTypeEnum value)
+      - name: description
+        in: formData
+        type: string
+        required: true
+        description: Description of the evidence
+      - name: validation_method_str
+        in: formData
+        type: string
+        required: false
+        description: Validation method used (must be valid ValidationMethodEnum value)
+      - name: timestamp_str
+        in: formData
+        type: string
+        required: false
+        description: Timestamp in ISO 8601 format
+      - name: language
+        in: formData
+        type: string
+        required: false
+        description: Programming language (for code snippets)
+      - name: script_language
+        in: formData
+        type: string
+        required: false
+        description: Script language (for PoC scripts)
+      - name: command
+        in: formData
+        type: string
+        required: false
+        description: Command executed (for command output evidence)
+      - name: tool_name
+        in: formData
+        type: string
+        required: false
+        description: Tool name (for tool-specific output)
+      - name: caption
+        in: formData
+        type: string
+        required: false
+        description: Caption for screenshots
+    responses:
+      200:
+        description: Evidence attached successfully
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            message:
+              type: string
+            evidence_id:
+              type: string
+      400:
+        description: Bad request
+      404:
+        description: Finding not found
+      500:
+        description: Internal server error
+    """
+    if 'evidence_file' not in request.files:
+        return jsonify({"error": "No evidence_file in the request"}), 400
+    
+    evidence_file = request.files['evidence_file']
+    
+    if evidence_file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+    
+    # Get required form parameters
+    evidence_type_str = request.form.get('evidence_type_str')
+    description = request.form.get('description')
+    
+    if not evidence_type_str:
+        return jsonify({"error": "evidence_type_str is required"}), 400
+    
+    if not description:
+        return jsonify({"error": "description is required"}), 400
+    
+    # Get optional parameters
+    validation_method_str = request.form.get('validation_method_str')
+    timestamp_str = request.form.get('timestamp_str')
+    
+    # Get additional parameters for different evidence types
+    additional_params = {
+        'language': request.form.get('language'),
+        'script_language': request.form.get('script_language'),
+        'command': request.form.get('command'),
+        'tool_name': request.form.get('tool_name'),
+        'caption': request.form.get('caption'),
+        'log_source': request.form.get('log_source'),
+        'log_level': request.form.get('log_level'),
+        'component_name': request.form.get('component_name'),
+        'file_path': request.form.get('file_path'),
+        'start_line': request.form.get('start_line', type=int),
+        'end_line': request.form.get('end_line', type=int),
+        'script_arguments': request.form.getlist('script_arguments'),
+        'expected_outcome': request.form.get('expected_outcome'),
+        'setting_name': request.form.get('setting_name'),
+        'interpretation': request.form.get('interpretation'),
+        'exit_code': request.form.get('exit_code', type=int),
+        'execution_context': request.form.get('execution_context'),
+        'tool_version': request.form.get('tool_version'),
+        'command_line': request.form.get('command_line'),
+        'data_type_description': request.form.get('data_type_description'),
+    }
+    
+    # Remove None values
+    additional_params = {k: v for k, v in additional_params.items() if v is not None}
+    
+    db_session = None
+    
+    try:
+        # Create database session
+        db_session = SessionLocal()
+        
+        # Find the finding
+        finding = db_session.query(Finding).filter(Finding.id == finding_id).first()
+        if not finding:
+            return jsonify({"error": f"Finding with ID {finding_id} not found"}), 404
+        
+        # Read file content
+        file_content = evidence_file.read()
+        
+        # Create evidence from file upload
+        evidence = create_evidence_from_file_upload(
+            finding=finding,
+            file_content=file_content,
+            file_name=evidence_file.filename,
+            evidence_type_str=evidence_type_str,
+            description=description,
+            validation_method_str=validation_method_str,
+            timestamp_str=timestamp_str,
+            additional_params=additional_params,
+            db_session=db_session
+        )
+        
+        # Commit the changes
+        db_session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Evidence file '{evidence_file.filename}' attached successfully to finding {finding_id}",
+            "evidence_id": evidence.id
+        })
+    
+    except ValueError as e:
+        logger.error(f"Validation error attaching evidence: {e}")
+        if db_session:
+            db_session.rollback()
+        return jsonify({
+            "error": "Evidence validation failed",
+            "details": str(e)
+        }), 400
+    
+    except Exception as e:
+        logger.error(f"Error attaching evidence file: {e}")
+        if db_session:
+            db_session.rollback()
+        return jsonify({
+            "error": "Failed to attach evidence file",
+            "details": str(e)
+        }), 500
+    
+    finally:
+        if db_session:
+            db_session.close()
 
 # Add Swagger definitions for Vulnerability and Finding at the bottom of the file
 class EvidenceSchema(Schema):
