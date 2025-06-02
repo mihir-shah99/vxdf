@@ -6,6 +6,7 @@ import logging
 import os
 from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
+import uuid
 
 # Remove the sarif_om import as we'll parse the JSON directly
 # from sarif_om import SarifLog  # type: ignore
@@ -109,6 +110,7 @@ class SarifParser:
             
             # Create finding
             finding = Finding(
+                id=str(uuid.uuid4()),  # Generate a unique ID
                 source_id=result.get('id') or result.get('ruleId', ''),
                 source_type="SARIF",
                 vulnerability_type=vuln_type,

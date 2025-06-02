@@ -18,6 +18,8 @@ class ValidationResult:
     """
     is_exploitable: bool
     message: str
+    status: str = "completed"  # completed, failed, skipped
+    is_validated: bool = True
     evidence: List[Dict[str, Any]] = None
     vxdf_data: Optional[Dict[str, Any]] = None
     

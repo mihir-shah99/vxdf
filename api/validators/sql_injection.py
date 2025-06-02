@@ -249,7 +249,6 @@ class SQLInjectionValidator(Validator):
             
             # Install necessary packages
             self.docker_env.install_package("sqlite3")
-            self.docker_env.install_python_package("sqlite3")
             
             # Create a test database
             self._create_test_database()

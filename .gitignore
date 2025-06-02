@@ -43,15 +43,6 @@ yarn-error.log
 .yarn/install-state.gz
 frontend/dist/
 
-# Logs
-logs/
-*.log
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
 # IDE
 .idea/
 .vscode/
@@ -71,8 +62,6 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
-temp/
-output/
 *.lock
 !.uv.lock
 uv.lock

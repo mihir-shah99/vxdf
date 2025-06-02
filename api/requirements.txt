@@ -1,4 +1,10 @@
-beautifulsoup4>=4.13.4
+rich>=10.0.0
+pydantic>=2.0.0
+sqlalchemy>=2.0.0
+requests>=2.0.0
+jsonschema>=4.0.0
+docker>=6.0.0
+beautifulsoup4>=4.0.0
 click>=8.1.8
 cryptography>=44.0.3
 email-validator>=2.2.0
@@ -6,9 +12,6 @@ flask>=3.1.0
 flask-cors>=4.0.0
 flask-sqlalchemy>=3.1.1
 gunicorn>=23.0.0
-jsonschema>=4.0.0
 psycopg2-binary>=2.9.10
-pydantic>=2.11.4
-requests>=2.32.3
 flasgger
 marshmallow>=4.0.0 

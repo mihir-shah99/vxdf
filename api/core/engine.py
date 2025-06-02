@@ -1005,3 +1005,49 @@ class ValidationEngine:
                 "file_path": vxdf_file_path,
                 "error": f"Validation error: {e}"
             }
+
+    def setup_validation_container(self, finding: Finding) -> str:
+        """
+        Set up a Docker container for validating a finding.
+        
+        Args:
+            finding: Finding to validate
+            
+        Returns:
+            Container ID
+        """
+        logger.info(f"Setting up validation container for finding: {finding.id}")
+        
+        # For now, we'll just return a dummy container ID
+        # In a real implementation, this would create and configure a Docker container
+        return f"validation-container-{finding.id}"
+    
+    def cleanup_validation_container(self, container_id: str) -> None:
+        """
+        Clean up a validation container.
+        
+        Args:
+            container_id: ID of the container to clean up
+        """
+        logger.info(f"Cleaning up validation container: {container_id}")
+        
+        # For now, this is a no-op
+        # In a real implementation, this would stop and remove the Docker container
+        pass
+    
+    def collect_evidence(self, finding: Finding, validation_result: Any) -> List[Dict[str, Any]]:
+        """
+        Collect evidence from a validation container.
+        
+        Args:
+            finding: Finding being validated
+            validation_result: Result of validation
+            
+        Returns:
+            List of evidence items
+        """
+        logger.info(f"Collecting evidence for finding: {finding.id}")
+        
+        # For now, return the evidence from the validation result
+        # In a real implementation, this would collect evidence from the container
+        return validation_result.evidence if hasattr(validation_result, 'evidence') else []
