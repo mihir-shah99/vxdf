@@ -4,15 +4,29 @@ Parser for SARIF (Static Analysis Results Interchange Format) files.
 import json
 import logging
 import os
-from typing import List, Dict, Any, Optional, Union
+import sys
+from typing import List, Dict, Any, Optional, Union, Tuple
 from pathlib import Path
 import uuid
 
-# Remove the sarif_om import as we'll parse the JSON directly
-# from sarif_om import SarifLog  # type: ignore
+# Fix import paths - add project root to Python path
+API_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = API_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+if str(API_DIR) not in sys.path:
+    sys.path.insert(0, str(API_DIR))
 
-from api.models.finding import Finding
-from api.config import CWE_TO_VULN_TYPE, SEVERITY_THRESHOLDS, PROJECT_ROOT
+# Import models with path resolution
+try:
+    from api.models.finding import Finding
+    from api.config import CWE_TO_VULN_TYPE, SEVERITY_THRESHOLDS, PROJECT_ROOT as CONFIG_PROJECT_ROOT
+    PROJECT_ROOT = CONFIG_PROJECT_ROOT
+except ImportError:
+    # Fallback for running from api directory
+    from models.finding import Finding
+    from config import CWE_TO_VULN_TYPE, SEVERITY_THRESHOLDS, PROJECT_ROOT as CONFIG_PROJECT_ROOT
+    PROJECT_ROOT = CONFIG_PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -265,7 +279,7 @@ class SarifParser:
             'column': column,
         }
             
-    def _extract_severity(self, result: Dict[str, Any], rule: Dict[str, Any]) -> tuple[str, Optional[float]]:
+    def _extract_severity(self, result: Dict[str, Any], rule: Dict[str, Any]) -> Tuple[str, Optional[float]]:
         """
         Extract severity information from a SARIF result.
         
@@ -346,24 +360,46 @@ class SarifParser:
         if result.get('properties') and 'security-severity' in result.get('properties', {}):
             return True
         
-        # Check the level - errors and warnings may be security issues
+        # Get rule ID and message for analysis
+        rule_id = result.get('ruleId', '')
+        message_text = ''
+        message = result.get('message', {})
+        if isinstance(message, dict):
+            message_text = message.get('text', '')
+        elif isinstance(message, str):
+            message_text = message
+        
+        # Look for security-related keywords in rule ID and message
+        security_keywords = [
+            'secur', 'vuln', 'cve', 'cwe', 'exploit', 'attack', 
+            'malicious', 'injection', 'xss', 'csrf', 'traversal', 
+            'sql', 'command', 'overflow', 'password', 'auth', 
+            'sensitive', 'dos', 'denial', 'permission', 'crypto',
+            'unsafe', 'insecure', 'taint', 'sanitiz', 'valid'
+        ]
+        
+        combined_text = (rule_id + ' ' + message_text).lower()
+        for keyword in security_keywords:
+            if keyword in combined_text:
+                return True
+        
+        # Check for specific security rule patterns
+        security_patterns = [
+            'audit', 'security', 'detect', 'prevent', 'protect',
+            'check', 'verify', 'validate', 'escape', 'encode'
+        ]
+        
+        for pattern in security_patterns:
+            if pattern in rule_id.lower():
+                return True
+        
+        # Check level as secondary criteria (not primary filter)
         level = result.get('level', '').upper()
         if level in ['ERROR', 'WARNING']:
-            # But we should still try to filter only security-related ones
-            message = result.get('message', {}).get('text', '')
-            rule_id = result.get('ruleId', '')
-            
-            # Look for security-related keywords
-            security_keywords = [
-                'secur', 'vuln', 'cve', 'cwe', 'exploit', 'attack', 
-                'malicious', 'injection', 'xss', 'csrf', 'traversal', 
-                'sql', 'command', 'overflow', 'password', 'auth', 
-                'sensitive', 'dos', 'denial', 'permission'
-            ]
-            
-            combined_text = (message + ' ' + rule_id).lower()
-            for keyword in security_keywords:
-                if keyword in combined_text:
+            # Additional check for potential security issues
+            security_indicators = ['leak', 'expose', 'disclosure', 'bypass', 'break']
+            for indicator in security_indicators:
+                if indicator in combined_text:
                     return True
         
         return False

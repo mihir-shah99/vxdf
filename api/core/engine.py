@@ -45,10 +45,12 @@ class ValidationEngine:
     
     def __init__(self):
         """
-        Initialize the validation engine.
+        Initialize the validation engine with proper session management.
         """
         self.validator_factory = ValidatorFactory()
-        self.db = SessionLocal()
+        # Use the new session manager instead of creating our own session
+        from api.core.session_manager import RealSessionManager
+        self.session_manager = RealSessionManager()
         
         # Evidence type mapping from legacy strings to normative enums
         self.evidence_type_mapping = {
@@ -76,8 +78,8 @@ class ValidationEngine:
         """
         Clean up when the engine is destroyed.
         """
-        if hasattr(self, 'db'):
-            self.db.close()
+        # No need to clean up sessions - the session manager handles this
+        pass
     
     def filter_findings(self, findings: List[Finding], 
                       vuln_types: Optional[List[str]] = None,
@@ -124,7 +126,7 @@ class ValidationEngine:
     
     def validate_finding(self, finding: Finding) -> Finding:
         """
-        Validate a finding to determine if it's exploitable.
+        Validate a finding to determine if it's exploitable using proper session management.
         
         Args:
             finding: Finding to validate
@@ -140,312 +142,481 @@ class ValidationEngine:
             
             if not validator:
                 logger.warning(f"No validator available for {finding.vulnerability_type}")
-                finding.validation_message = f"No validator available for {finding.vulnerability_type}"
-                finding.is_validated = True
-                finding.is_exploitable = None  # Unknown
-                self._save_finding(finding)
-                return finding
+                # Use session manager to safely update the finding
+                return self.session_manager.update_finding_validation(
+                    finding.id,
+                    None,  # Unknown exploitability
+                    f"No validator available for {finding.vulnerability_type}"
+                ) or finding
             
-            # Increment validation attempts
-            finding.validation_attempts += 1
-            
-            # Perform validation
+            # Perform validation using the validator
+            logger.info(f"Running validation for {finding.vulnerability_type}")
             validator_result = validator.validate(finding)
             
-            # Update finding with validation results
-            finding.is_validated = True
-            finding.is_exploitable = validator_result.is_exploitable
-            finding.validation_date = datetime.datetime.now(datetime.UTC)
-            finding.validation_message = validator_result.message
-            finding.vxdf_data = validator_result.vxdf_data
-            
-            # Save evidence
+            # Prepare evidence items for saving
+            evidence_items = []
             if validator_result.evidence:
-                for evidence_item in validator_result.evidence:
-                    evidence = Evidence(
-                        finding_id=finding.id,
-                        evidence_type=evidence_item.type,
-                        description=evidence_item.description,
-                        content=evidence_item.content
-                    )
-                    finding.evidence.append(evidence)
+                logger.info(f"Processing {len(validator_result.evidence)} evidence items from validation")
+                evidence_items = validator_result.evidence
             
-            # Save to database
-            self._save_finding(finding)
+            # Use session manager to safely update the finding and evidence
+            updated_finding = self.session_manager.update_finding_validation(
+                finding.id,
+                validator_result.is_exploitable,
+                validator_result.message,
+                evidence_items
+            )
             
-            logger.info(f"Validation complete: {finding.id} - Exploitable: {finding.is_exploitable}")
-            return finding
-        
+            if updated_finding:
+                logger.info(f"Validation complete: {finding.id} - Exploitable: {updated_finding.is_exploitable}")
+                return updated_finding
+            else:
+                logger.error(f"Failed to update finding {finding.id}")
+                return finding
+            
         except Exception as e:
             logger.error(f"Error validating finding {finding.id}: {e}", exc_info=True)
-            finding.is_validated = True
-            finding.is_exploitable = None  # Unknown
-            finding.validation_date = datetime.datetime.now(datetime.UTC)
-            finding.validation_message = f"Error during validation: {str(e)}"
-            self._save_finding(finding)
-            return finding
+            
+            # Use session manager to safely save error state
+            error_finding = self.session_manager.update_finding_validation(
+                finding.id,
+                None,  # Unknown due to error
+                f"Error during validation: {str(e)}"
+            )
+            
+            return error_finding or finding
     
     def _save_finding(self, finding: Finding) -> None:
         """
-        Save a finding to the database.
+        Save a finding to the database using proper session management.
         
         Args:
             finding: Finding to save
         """
         try:
-            self.db.add(finding)
-            self.db.commit()
+            self.session_manager.save_finding(finding)
         except Exception as e:
             logger.error(f"Error saving finding to database: {e}", exc_info=True)
-            self.db.rollback()
     
-    def generate_vxdf(self, findings: List[Finding], 
-                     target_name: str = "Unknown Application",
-                     target_version: Optional[str] = None) -> VXDFModel:
+    def generate_vxdf(self, findings: List[Finding], application_name: str, application_version: str = "1.0.0") -> VXDFModel:
         """
-        Generate a VXDF document from validated findings using v1.0.0 schema.
+        Generate a VXDF document from security findings with intelligent correlation.
         
         Args:
-            findings: List of validated findings
-            target_name: Name of the target application
-            target_version: Version of the target application
+            findings: List of security findings from various tools
+            application_name: Name of the application being analyzed
+            application_version: Version of the application
             
         Returns:
-            VXDF v1.0.0 compliant document
+            VXDFModel: Complete VXDF document with correlated findings
         """
-        logger.info(f"Generating VXDF v1.0.0 document for {len(findings)} findings")
+        logger.info(f"Generating VXDF document for {len(findings)} findings")
         
-        # Create generator tool info
-        generator_info = GeneratorToolInfo(
-            name="VXDF Validate",
-            version=__version__
-        )
+        # Step 1: Correlate findings intelligently
+        correlated_groups = self._correlate_findings(findings)
+        logger.info(f"Correlated {len(findings)} findings into {len(correlated_groups)} groups")
         
-        # Create application info
-        app_info = ApplicationInfo(
-            name=target_name,
-            version=target_version
-        )
-        
-        # Create exploit flows from findings
+        # Step 2: Generate exploit flows from correlated groups
         exploit_flows = []
-        for finding in findings:
-            # Process all findings, not just validated ones
-            # Mark unvalidated findings appropriately
-            if not finding.is_validated:
-                logger.info(f"Processing unvalidated finding: {finding.id}")
-                # Mark as unvalidated but still process
-                finding.is_exploitable = None  # Unknown
-            
-            flow = self._create_exploit_flow_from_finding(finding)
-            exploit_flows.append(flow)
+        for group in correlated_groups:
+            flow = self._create_correlated_exploit_flow(group)
+            if flow:
+                exploit_flows.append(flow)
         
-        # If no exploit flows were created, create a default one with required evidence
+        # Handle the case where no security issues were found
         if not exploit_flows:
-            logger.info("No findings provided, creating default exploit flow")
-            default_location = LocationModel(
-                locationType=LocationTypeEnum.GENERIC_RESOURCE_IDENTIFIER,
-                description="No specific location identified"
-            )
-            
-            # Create required evidence for default flow
-            default_evidence = EvidenceModel(
-                evidenceType=EvidenceTypeEnum.OTHER_EVIDENCE,
-                description="No vulnerabilities found in this assessment",
-                data=OtherEvidenceDataModel(
-                    dataTypeDescription="Assessment result",
-                    dataContent="Security assessment completed with no validated vulnerabilities found"
-                ),
-                validationMethod=ValidationMethodEnum.OTHER_VALIDATION_METHOD
-            )
-            
-            default_flow = ExploitFlowModel(
+            logger.info("No security findings detected - creating summary flow")
+            summary_flow = ExploitFlowModel(
                 id=uuid.uuid4(),
-                title="No Validated Vulnerabilities Found",
-                description="No validated vulnerabilities found in this assessment",
+                title="Security Analysis Summary - No Issues Found",
+                description=f"Security analysis completed successfully. No vulnerabilities detected in {application_name}.",
+                category="security_analysis_summary",
                 severity=SeverityModel(
-                    level=SeverityLevelEnum.INFORMATIONAL,
-                    justification="No exploitable vulnerabilities identified"
+                    level=SeverityLevelEnum.INFORMATIONAL
                 ),
-                category="Assessment Result",
-                evidence=[default_evidence],  # Always include at least one evidence item
-                validatedAt=datetime.datetime.now(datetime.UTC),
-                source=default_location,
-                sink=default_location,
-                status=StatusEnum.FALSE_POSITIVE_AFTER_REVALIDATION
+                validatedAt=datetime.datetime.now(datetime.timezone.utc),
+                evidence=[
+                    EvidenceModel(
+                        id=uuid.uuid4(),
+                        evidenceType=EvidenceTypeEnum.OTHER_EVIDENCE,
+                        description="Security scan completed with no findings",
+                        validationMethod=ValidationMethodEnum.AUTOMATED_EXPLOIT_TOOL_CONFIRMATION,
+                        data=OtherEvidenceDataModel(
+                            dataTypeDescription="Security scan summary",
+                            dataContent=f"Analysis completed for {application_name} - no security vulnerabilities detected"
+                        )
+                    )
+                ]
             )
-            exploit_flows.append(default_flow)
+            exploit_flows.append(summary_flow)
         
-        # Create VXDF document with the corrected structure - direct exploitFlows 
+        # Create VXDF document
         vxdf_doc = VXDFModel(
-            vxdfVersion="1.0.0",
             id=uuid.uuid4(),
-            generatedAt=datetime.datetime.now(datetime.UTC),
-            generatorTool=generator_info,
-            applicationInfo=app_info,
+            vxdfVersion="1.0.0",
+            generatedAt=datetime.datetime.now(datetime.timezone.utc),
+            applicationInfo=ApplicationInfo(
+                name=application_name,
+                version=application_version
+            ),
             exploitFlows=exploit_flows
         )
         
+        logger.info(f"Generated VXDF document with {len(exploit_flows)} exploit flows")
         return vxdf_doc
     
-    def _create_exploit_flow_from_finding(self, finding: Finding) -> ExploitFlowModel:
+    def _correlate_findings(self, findings: List[Finding]) -> List[List[Finding]]:
         """
-        Create a VXDF v1.0.0 exploit flow from a finding.
+        Intelligently correlate findings across tools.
         
         Args:
-            finding: Finding to convert
+            findings: List of all findings
             
         Returns:
-            ExploitFlowModel
+            List of correlated finding groups
         """
-        # Create evidence items using comprehensive parsing
+        correlated_groups = []
+        processed_findings = set()
+        
+        for finding in findings:
+            if id(finding) in processed_findings:
+                continue
+                
+            # Start a new correlation group
+            group = [finding]
+            processed_findings.add(id(finding))
+            
+            # Find related findings
+            for other_finding in findings:
+                if id(other_finding) in processed_findings:
+                    continue
+                    
+                if self._findings_are_related(finding, other_finding):
+                    group.append(other_finding)
+                    processed_findings.add(id(other_finding))
+            
+            correlated_groups.append(group)
+        
+        return correlated_groups
+    
+    def _findings_are_related(self, finding1: Finding, finding2: Finding) -> bool:
+        """
+        Determine if two findings are related and should be correlated.
+        
+        Args:
+            finding1: First finding
+            finding2: Second finding
+            
+        Returns:
+            True if findings are related
+        """
+        # Same vulnerability type correlation
+        if finding1.vulnerability_type == finding2.vulnerability_type:
+            # Check for file/location proximity (SAST findings)
+            if finding1.file_path and finding2.file_path:
+                if finding1.file_path == finding2.file_path:
+                    # Same file - check line proximity
+                    if (finding1.line_number and finding2.line_number and 
+                        abs(finding1.line_number - finding2.line_number) <= 10):
+                        return True
+            
+            # Check for URL/endpoint correlation (DAST findings)
+            if (finding1.raw_data and finding2.raw_data and 
+                'url' in finding1.raw_data and 'url' in finding2.raw_data):
+                url1 = finding1.raw_data['url']
+                url2 = finding2.raw_data['url']
+                if self._urls_are_related(url1, url2):
+                    return True
+        
+        # Cross-tool correlation (SAST + DAST for same vulnerability type)
+        if (finding1.vulnerability_type == finding2.vulnerability_type and
+            finding1.source_type != finding2.source_type):
+            # Different source types but same vulnerability - potential correlation
+            if self._cross_tool_correlation_match(finding1, finding2):
+                return True
+        
+        # Severity amplification correlation
+        if (finding1.severity in ['CRITICAL', 'HIGH'] and 
+            finding2.severity in ['CRITICAL', 'HIGH']):
+            if self._severity_correlation_match(finding1, finding2):
+                return True
+        
+        return False
+    
+    def _urls_are_related(self, url1: str, url2: str) -> bool:
+        """Check if two URLs are related (same endpoint, similar paths)."""
+        try:
+            from urllib.parse import urlparse
+            parsed1 = urlparse(str(url1))
+            parsed2 = urlparse(str(url2))
+            
+            # Same host and similar path
+            if parsed1.netloc == parsed2.netloc:
+                path1_parts = parsed1.path.strip('/').split('/')
+                path2_parts = parsed2.path.strip('/').split('/')
+                
+                # Same endpoint or nested paths
+                if (len(path1_parts) > 0 and len(path2_parts) > 0 and
+                    path1_parts[0] == path2_parts[0]):
+                    return True
+        except:
+            pass
+        return False
+    
+    def _cross_tool_correlation_match(self, finding1: Finding, finding2: Finding) -> bool:
+        """Check if findings from different tools correlate to same vulnerability."""
+        # SQL injection correlation across SAST/DAST
+        if finding1.vulnerability_type == 'sql_injection':
+            # Look for file/endpoint correlation
+            if (finding1.file_path and finding2.raw_data and 'url' in finding2.raw_data):
+                # Extract potential endpoint from file path
+                if any(endpoint in finding1.file_path.lower() for endpoint in ['api', 'route', 'controller']):
+                    return True
+        
+        # XSS correlation across tools
+        if finding1.vulnerability_type == 'xss':
+            if finding1.file_path and finding2.raw_data:
+                return True
+        
+        return False
+    
+    def _severity_correlation_match(self, finding1: Finding, finding2: Finding) -> bool:
+        """Check if high-severity findings should be correlated."""
+        # Correlate critical dependency vulnerabilities with code vulnerabilities
+        if (finding1.source_type == 'SCA' and finding2.source_type in ['SAST', 'DAST-ZAP']):
+            return True
+        return False
+    
+    def _create_correlated_exploit_flow(self, finding_group: List[Finding]) -> Optional[ExploitFlowModel]:
+        """
+        Create an exploit flow from a correlated group of findings.
+        
+        Args:
+            finding_group: Group of correlated findings
+            
+        Returns:
+            ExploitFlowModel with synthesized evidence
+        """
+        if not finding_group:
+            return None
+        
+        # Use the most severe finding as the primary
+        primary_finding = max(finding_group, key=lambda f: self._severity_score(f.severity))
+        
+        # Determine intelligent category based on correlation
+        category = self._determine_intelligent_category(finding_group)
+        
+        # Create evidence from all findings in the group
         evidence_items = []
-        for evidence in finding.evidence:
-            try:
-                # Map evidence type to normative enum
-                evidence_type = self._map_evidence_type(evidence.evidence_type)
-                
-                # Parse content into structured data model
-                evidence_data = self._parse_evidence_content(evidence)
-                
-                # Determine validation method based on evidence type and finding source
-                validation_method = ValidationMethodEnum.OTHER_VALIDATION_METHOD
-                if finding.source_type in ["DAST-ZAP", "DAST-Burp", "DAST-Generic"]:
-                    validation_method = ValidationMethodEnum.DYNAMIC_ANALYSIS_EXPLOIT
-                elif finding.source_type in ["SAST", "CodeQL", "SonarQube"]:
-                    validation_method = ValidationMethodEnum.STATIC_ANALYSIS_VALIDATION
-                elif evidence.evidence_type.lower() in ["manual_verification", "manual"]:
-                    validation_method = ValidationMethodEnum.MANUAL_PENETRATION_TESTING_EXPLOIT
-                elif evidence.evidence_type.lower() in ["poc_script", "exploit"]:
-                    validation_method = ValidationMethodEnum.AUTOMATED_EXPLOIT_TOOL_CONFIRMATION
-                
-                # Create normative EvidenceModel
-                evidence_item = EvidenceModel(
-                    evidenceType=evidence_type,
-                    description=evidence.description or f"Evidence for {finding.name}",
-                    data=evidence_data,
-                    validationMethod=validation_method,
-                    timestamp=evidence.created_at if hasattr(evidence, 'created_at') else None
-                )
-                evidence_items.append(evidence_item)
-                
-            except Exception as e:
-                logger.error(f"Error processing evidence {evidence.id}: {e}", exc_info=True)
-                # Create fallback evidence
-                fallback_evidence = EvidenceModel(
-                    evidenceType=EvidenceTypeEnum.OTHER_EVIDENCE,
-                    description=evidence.description or f"Fallback evidence for {finding.name}",
-                    data=OtherEvidenceDataModel(
-                        dataTypeDescription="Error processing original evidence",
-                        dataContent=str(evidence.content) if evidence.content else "No content"
-                    ),
-                    validationMethod=ValidationMethodEnum.OTHER_VALIDATION_METHOD
-                )
-                evidence_items.append(fallback_evidence)
+        for finding in finding_group:
+            evidence = self._create_intelligent_evidence(finding)
+            if evidence:
+                evidence_items.append(evidence)
         
-        # If no evidence items were created, create a default one
-        if not evidence_items:
-            default_evidence = EvidenceModel(
-                evidenceType=EvidenceTypeEnum.OTHER_EVIDENCE,
-                description=f"Default evidence for {finding.name}",
-                data=OtherEvidenceDataModel(
-                    dataTypeDescription="No specific evidence available",
-                    dataContent="Vulnerability identified through automated scanning"
-                ),
-                validationMethod=ValidationMethodEnum.AUTOMATED_EXPLOIT_TOOL_CONFIRMATION
-            )
-            evidence_items.append(default_evidence)
+        # Determine correlation-aware severity
+        correlated_severity = self._calculate_correlated_severity(finding_group)
         
-        # Create source location
-        source_location = LocationModel(
-            locationType=LocationTypeEnum.SOURCE_CODE_UNIT,
-            filePath=finding.file_path or "Unknown",
-            startLine=finding.line_number,
-            startColumn=finding.column,
-            description="Source location of the vulnerability"
-        )
-        
-        # Create sink location (for now, same as source if no flow data available)
-        sink_location = LocationModel(
-            locationType=LocationTypeEnum.SOURCE_CODE_UNIT,
-            filePath=finding.file_path or "Unknown", 
-            startLine=finding.line_number,
-            startColumn=finding.column,
-            description="Sink location where vulnerability is triggered"
-        )
-        
-        # Create trace steps (optional)
-        trace_steps = []
-        
-        # Add source step
-        source_step = TraceStepModel(
-            order=0,
-            location=source_location,
-            description="Source of untrusted data",
-            stepType=StepTypeEnum.SOURCE_INTERACTION,
-            evidenceRefs={evidence.id for evidence in evidence_items} if evidence_items else set()
-        )
-        trace_steps.append(source_step)
-        
-        # Add sink step
-        sink_step = TraceStepModel(
-            order=1,
-            location=sink_location,
-            description="Sink where vulnerability is triggered",
-            stepType=StepTypeEnum.SINK_INTERACTION,
-            evidenceRefs={evidence.id for evidence in evidence_items} if evidence_items else set()
-        )
-        trace_steps.append(sink_step)
-        
-        # Create the exploit flow with comprehensive severity mapping
-        severity_level = SeverityLevelEnum.MEDIUM  # Default
-        if finding.severity:
-            severity_mapping = {
-                'CRITICAL': SeverityLevelEnum.CRITICAL,
-                'HIGH': SeverityLevelEnum.HIGH,
-                'MEDIUM': SeverityLevelEnum.MEDIUM,
-                'LOW': SeverityLevelEnum.LOW,
-                'INFORMATIONAL': SeverityLevelEnum.INFORMATIONAL,
-                'INFO': SeverityLevelEnum.INFORMATIONAL,
-                'NONE': SeverityLevelEnum.NONE
-            }
-            severity_level = severity_mapping.get(finding.severity.upper(), SeverityLevelEnum.MEDIUM)
-        
-        severity_model = SeverityModel(
-            level=severity_level,
-            justification=f"Severity determined from {finding.source_type} scan results"
-        )
-        
-        # Map vulnerability type to category with better defaults
-        category = finding.vulnerability_type or "Unknown"
-        if category.lower() in ['sql_injection', 'sqli']:
-            category = "SQL Injection"
-        elif category.lower() in ['xss', 'cross_site_scripting']:
-            category = "Cross-Site Scripting"
-        elif category.lower() in ['path_traversal', 'directory_traversal']:
-            category = "Path Traversal"
-        elif category.lower() in ['command_injection', 'code_injection']:
-            category = "Command Injection"
-        
+        # Create exploit flow
         flow = ExploitFlowModel(
             id=uuid.uuid4(),
-            title=finding.name or "Unnamed Vulnerability",
-            description=finding.description or f"Exploit flow for {finding.name}",
-            severity=severity_model,
+            title=self._create_correlated_title(finding_group),
+            description=self._create_correlated_description(finding_group),
             category=category,
-            evidence=evidence_items,
-            validatedAt=datetime.datetime.now(datetime.UTC),
-            source=source_location,
-            sink=sink_location,
-            trace=trace_steps,
-            status=StatusEnum.OPEN if finding.is_exploitable else StatusEnum.FALSE_POSITIVE_AFTER_REVALIDATION,
-            cwes=set(),
-            tags=set(),
-            owaspTopTenCategories=set(),
-            references=set()
+            severity=SeverityModel(
+                level=SeverityLevelEnum(correlated_severity)
+            ),
+            validatedAt=datetime.datetime.now(datetime.timezone.utc),
+            evidence=evidence_items
         )
         
         return flow
+    
+    def _determine_intelligent_category(self, finding_group: List[Finding]) -> str:
+        """Determine category based on correlated findings."""
+        vuln_types = [f.vulnerability_type for f in finding_group]
+        source_types = [f.source_type for f in finding_group]
+        
+        # Multi-tool correlation categories
+        if len(set(source_types)) > 1:
+            if 'sql_injection' in vuln_types:
+                return 'sql_injection_multi_tool'
+            elif 'xss' in vuln_types:
+                return 'xss_multi_tool'
+            else:
+                return 'multi_tool_correlation'
+        
+        # Single tool categories
+        if vuln_types[0] == 'vulnerable_component':
+            return 'vulnerable_component'
+        elif vuln_types[0] == 'sql_injection':
+            return 'sql_injection'
+        elif vuln_types[0] == 'xss':
+            return 'xss'
+        else:
+            return vuln_types[0] if vuln_types[0] else 'other'
+    
+    def _create_intelligent_evidence(self, finding: Finding) -> Optional[EvidenceModel]:
+        """Create evidence with source-aware validation methods."""
+        # Determine validation method based on source
+        validation_method = self._get_source_aware_validation_method(finding)
+        
+        # Determine evidence type based on finding characteristics
+        evidence_type = self._get_intelligent_evidence_type(finding)
+        
+        # Create appropriate data model based on evidence type
+        evidence_data = self._create_evidence_data_model(finding, evidence_type)
+        
+        evidence = EvidenceModel(
+            id=uuid.uuid4(),
+            evidenceType=evidence_type,
+            description=finding.description or f"Evidence from {finding.source_type}",
+            validationMethod=validation_method,
+            data=evidence_data
+        )
+        
+        return evidence
+    
+    def _create_evidence_data_model(self, finding: Finding, evidence_type: EvidenceTypeEnum):
+        """Create the appropriate data model based on evidence type."""
+        if evidence_type == EvidenceTypeEnum.CODE_SNIPPET_SOURCE:
+            return CodeSnippetDataModel(
+                content=finding.description or f"Code finding: {finding.name}",
+                language="javascript" if finding.file_path and ".js" in finding.file_path else None,
+                filePath=finding.file_path,
+                startLine=finding.line_number,
+                endLine=finding.line_number
+            )
+        elif evidence_type == EvidenceTypeEnum.HTTP_REQUEST_LOG:
+            # Extract URL from raw_data if available
+            url = "http://localhost:3000/"
+            if finding.raw_data and 'url' in finding.raw_data:
+                url = finding.raw_data['url']
+            
+            return HttpRequestLogDataModel(
+                method=HttpMethodEnum.GET,
+                url=url,
+                headers=[],
+                body=None
+            )
+        elif evidence_type == EvidenceTypeEnum.VULNERABLE_COMPONENT_SCAN_OUTPUT:
+            # Create SCA data model
+            component_name = "unknown-component"
+            component_version = "0.0.0"
+            
+            if finding.raw_data:
+                if isinstance(finding.raw_data, dict):
+                    component_name = finding.raw_data.get('name', component_name)
+                    component_version = finding.raw_data.get('version', component_version)
+            
+            return ScaOutputDataModel(
+                componentIdentifier=ScaComponentIdentifierModel(
+                    name=component_name,
+                    version=component_version
+                ),
+                vulnerabilityIdentifiers=[
+                    ScaVulnerabilityIdentifierModel(
+                        idSystem=VulnerabilityIdSystemEnum.OTHER,
+                        idValue=f"vuln-{component_name}"
+                    )
+                ],
+                toolName="SCA Scanner",
+                vulnerabilitySeverity=finding.severity
+            )
+        else:
+            # Default to OTHER_EVIDENCE
+            content = self._create_evidence_content(finding)
+            return OtherEvidenceDataModel(
+                dataTypeDescription=f"Security finding from {finding.source_type}",
+                dataContent=content
+            )
+    
+    def _get_source_aware_validation_method(self, finding: Finding) -> ValidationMethodEnum:
+        """Get validation method based on finding source."""
+        if finding.source_type == 'SARIF' or 'SAST' in finding.source_type:
+            return ValidationMethodEnum.STATIC_ANALYSIS_VALIDATION
+        elif 'DAST' in finding.source_type or finding.source_type.startswith('DAST'):
+            return ValidationMethodEnum.DYNAMIC_ANALYSIS_EXPLOIT
+        elif finding.source_type == 'SCA':
+            return ValidationMethodEnum.SOFTWARE_COMPOSITION_ANALYSIS_CONTEXTUAL_VALIDATION
+        else:
+            return ValidationMethodEnum.AUTOMATED_EXPLOIT_TOOL_CONFIRMATION
+    
+    def _get_intelligent_evidence_type(self, finding: Finding) -> EvidenceTypeEnum:
+        """Get evidence type based on finding characteristics."""
+        if finding.file_path and finding.line_number:
+            return EvidenceTypeEnum.CODE_SNIPPET_SOURCE
+        elif finding.raw_data and 'url' in str(finding.raw_data):
+            return EvidenceTypeEnum.HTTP_REQUEST_LOG
+        elif finding.vulnerability_type == 'vulnerable_component':
+            return EvidenceTypeEnum.VULNERABLE_COMPONENT_SCAN_OUTPUT
+        else:
+            return EvidenceTypeEnum.OTHER_EVIDENCE
+    
+    def _create_correlated_title(self, finding_group: List[Finding]) -> str:
+        """Create title that reflects correlation."""
+        if len(finding_group) == 1:
+            return finding_group[0].name
+        
+        vuln_types = set(f.vulnerability_type for f in finding_group)
+        source_types = set(f.source_type for f in finding_group)
+        
+        if len(vuln_types) == 1:
+            vuln_type = list(vuln_types)[0]
+            if len(source_types) > 1:
+                return f"{vuln_type.replace('_', ' ').title()} (Multi-Tool Correlation)"
+            else:
+                return f"{vuln_type.replace('_', ' ').title()} (Multiple Instances)"
+        else:
+            return f"Correlated Security Issues ({len(finding_group)} findings)"
+    
+    def _create_correlated_description(self, finding_group: List[Finding]) -> str:
+        """Create description that explains correlation."""
+        if len(finding_group) == 1:
+            return finding_group[0].description or "Security vulnerability detected"
+        
+        source_types = [f.source_type for f in finding_group]
+        vuln_types = [f.vulnerability_type for f in finding_group]
+        
+        desc = f"Correlated security findings from {len(set(source_types))} tool(s): "
+        desc += ", ".join(set(source_types))
+        desc += f". Vulnerability types: {', '.join(set(vuln_types))}"
+        
+        return desc
+    
+    def _calculate_correlated_severity(self, finding_group: List[Finding]) -> str:
+        """Calculate severity based on correlation and amplification."""
+        severities = [f.severity for f in finding_group]
+        severity_scores = [self._severity_score(s) for s in severities]
+        max_score = max(severity_scores)
+        
+        # Amplification logic - multiple findings increase severity
+        if len(finding_group) > 1:
+            source_types = set(f.source_type for f in finding_group)
+            if len(source_types) > 1:  # Multi-tool correlation
+                max_score = min(max_score + 1.0, 10.0)  # Amplify but cap at 10
+        
+        # Convert back to severity level
+        if max_score >= 9.0:
+            return 'CRITICAL'
+        elif max_score >= 7.0:
+            return 'HIGH'
+        elif max_score >= 4.0:
+            return 'MEDIUM'
+        elif max_score >= 1.0:
+            return 'LOW'
+        else:
+            return 'INFORMATIONAL'
+    
+    def _severity_score(self, severity: str) -> float:
+        """Convert severity to numeric score."""
+        severity_map = {
+            'CRITICAL': 9.0,
+            'HIGH': 7.0,
+            'MEDIUM': 5.0,
+            'LOW': 3.0,
+            'INFORMATIONAL': 1.0
+        }
+        return severity_map.get(severity.upper(), 5.0)
     
     def _extract_steps_from_sarif(self, code_flows: List[Dict[str, Any]]) -> List[TraceStepModel]:
         """
@@ -1051,3 +1222,19 @@ class ValidationEngine:
         # For now, return the evidence from the validation result
         # In a real implementation, this would collect evidence from the container
         return validation_result.evidence if hasattr(validation_result, 'evidence') else []
+
+    def _create_evidence_content(self, finding: Finding) -> str:
+        """Create evidence content from finding data."""
+        content_parts = []
+        
+        if finding.file_path:
+            content_parts.append(f"File: {finding.file_path}")
+        if finding.line_number:
+            content_parts.append(f"Line: {finding.line_number}")
+        if finding.raw_data:
+            content_parts.append(f"Raw data: {str(finding.raw_data)[:200]}...")
+        
+        if finding.description:
+            content_parts.append(f"Description: {finding.description}")
+        
+        return " | ".join(content_parts) if content_parts else f"Finding from {finding.source_type}"

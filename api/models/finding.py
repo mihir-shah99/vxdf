@@ -1,12 +1,27 @@
 """
 Database models for representing security findings.
 """
+import sys
 import uuid
 import datetime
+from pathlib import Path
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Text, ForeignKey, JSON, Enum
 from sqlalchemy.orm import relationship
 
-from api.models.database import Base
+# Fix import paths - add project root to Python path
+API_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = API_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+if str(API_DIR) not in sys.path:
+    sys.path.insert(0, str(API_DIR))
+
+# Import database Base with path resolution
+try:
+    from api.models.database import Base
+except ImportError:
+    # Fallback for running from api directory
+    from models.database import Base
 
 class Finding(Base):
     """
@@ -23,8 +38,8 @@ class Finding(Base):
     severity = Column(String(50), nullable=True)  # CRITICAL, HIGH, MEDIUM, LOW
     cvss_score = Column(Float, nullable=True)
     cwe_id = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
-    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC), onupdate=lambda: datetime.datetime.now(datetime.UTC))
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc))
     
     # Source code location information
     file_path = Column(String(1024), nullable=True)
@@ -56,7 +71,7 @@ class Evidence(Base):
     evidence_type = Column(String(100), nullable=False)  # http_request, stack_trace, etc.
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=False)  # The actual evidence data
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
 
 
 # Define relationship after both classes are defined

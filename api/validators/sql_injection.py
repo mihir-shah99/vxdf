@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional, Tuple
 
 from api.core.validator import Validator, ValidationResult
 from api.models.finding import Finding
+from api.models.vxdf import EvidenceTypeEnum
 from api.utils.docker_utils import DockerEnvironment
 from api.utils.http_utils import (
     make_request, inject_payload_in_params, 
@@ -161,7 +162,7 @@ class SQLInjectionValidator(Validator):
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
                             "description": f"SQL Injection with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
@@ -195,7 +196,7 @@ class SQLInjectionValidator(Validator):
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
                             "description": f"SQL Injection with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
@@ -287,7 +288,7 @@ class SQLInjectionValidator(Validator):
                 evidence = []
                 for payload_result in result.get("tests", []):
                     evidence_item = {
-                        "type": "sql_injection_test",
+                        "type": EvidenceTypeEnum.COMMAND_EXECUTION_OUTPUT.value,
                         "description": f"SQL Injection test with payload: {payload_result['payload']}",
                         "content": json.dumps(payload_result, indent=2)
                     }

@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional, Tuple
 
 from api.core.validator import Validator, ValidationResult
 from api.models.finding import Finding
+from api.models.vxdf import EvidenceTypeEnum
 from api.utils.docker_utils import DockerEnvironment
 from api.utils.http_utils import (
     make_request, inject_payload_in_params, 
@@ -33,21 +34,37 @@ class PathTraversalValidator(Validator):
         super().__init__()
         self.name = "Path Traversal Validator"
         self.payloads = [
-            "../../../etc/passwd",
-            "..%2F..%2F..%2Fetc%2Fpasswd",
-            "..\\..\\..\\etc\\passwd",
-            "/etc/passwd",
-            "../../../../etc/passwd",
-            "....//....//....//etc/passwd",
-            "/%2e%2e/%2e%2e/%2e%2e/etc/passwd",
-            "..%252f..%252f..%252fetc%252fpasswd",
-            "../../../etc/hosts",
-            "../../../Windows/win.ini",
-            "C:\\Windows\\system.ini",
-            "/var/log/auth.log",
-            "/proc/self/environ",
-            "/proc/self/cmdline",
-            "../../../../../../../../../../../../../../proc/version"
+            "../",
+            "../../",
+            "../../../",
+            "../../../../",
+            "../../../../../",
+            "../../../../../../",
+            "../../../../../../../",
+            "../../../../../../../../",
+            "../../../../../../../../../",
+            "../../../../../../../../../../",
+            "../../../../../../../../../../../",
+            "..\\",
+            "..\\..\\",
+            "..\\..\\..\\",
+            "..\\..\\..\\..\\",
+            "..\\..\\..\\..\\..\\",
+            "..\\..\\..\\..\\..\\..\\",
+            "..\\..\\..\\..\\..\\..\\..\\",
+            "..\\..\\..\\..\\..\\..\\..\\..\\",
+            "..\\..\\..\\..\\..\\..\\..\\..\\..\\",
+            "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\",
+            "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\",
+            "%2e%2e%2f",
+            "%2e%2e%2f%2e%2e%2f",
+            "%2e%2e%2f%2e%2e%2f%2e%2e%2f",
+            "%2e%2e%5c",
+            "%2e%2e%5c%2e%2e%5c",
+            "%2e%2e%5c%2e%2e%5c%2e%2e%5c",
+            "....//",
+            "....\\\\",
+            "....//"
         ]
         self.docker_env = None
     
@@ -141,39 +158,6 @@ class PathTraversalValidator(Validator):
                 message="Could not extract URL from finding to validate Path Traversal"
             )
         
-        # Check if URL has parameters that look like file paths
-        has_file_param = False
-        
-        # Look for query parameters with common file extensions or path-like names
-        file_param_patterns = [
-            r'file=',
-            r'path=',
-            r'filepath=',
-            r'document=',
-            r'load=',
-            r'read=',
-            r'dir=',
-            r'folder=',
-            r'doc=',
-            r'img=',
-            r'image=',
-            r'download=',
-            r'view=',
-            r'template=',
-            r'page=',
-            r'filename=',
-            r'\.(?:php|html|jsp|asp|txt|log|ini|conf|cfg|xml)$'
-        ]
-        
-        for pattern in file_param_patterns:
-            if re.search(pattern, url, re.IGNORECASE):
-                has_file_param = True
-                break
-        
-        # If no file-like parameters found, still test but log a warning
-        if not has_file_param:
-            logger.warning(f"URL does not appear to have file-related parameters: {url}")
-        
         # Try each payload
         evidence = []
         successful_payloads = []
@@ -192,20 +176,20 @@ class PathTraversalValidator(Validator):
                         timeout=10
                     )
                     
-                    # Check if path traversal was successful
+                    # Check for path traversal success in response
                     if detect_path_traversal_success(response):
                         successful_payloads.append(payload)
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
-                            "description": f"Path traversal with payload: {payload}",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
+                            "description": f"Path Traversal with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
                         evidence.append(evidence_item)
                 
                 except Exception as e:
-                    logger.warning(f"Error testing path traversal payload: {e}")
+                    logger.warning(f"Error testing Path Traversal payload: {e}")
                     continue
             
             # For POST requests, inject into body
@@ -226,29 +210,29 @@ class PathTraversalValidator(Validator):
                         timeout=10
                     )
                     
-                    # Check if path traversal was successful
+                    # Check for path traversal success in response
                     if detect_path_traversal_success(response):
                         successful_payloads.append(payload)
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
-                            "description": f"Path traversal with payload: {payload}",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
+                            "description": f"Path Traversal with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
                         evidence.append(evidence_item)
                 
                 except Exception as e:
-                    logger.warning(f"Error testing path traversal payload: {e}")
+                    logger.warning(f"Error testing Path Traversal payload: {e}")
                     continue
         
         # Determine if exploitable
         is_exploitable = len(successful_payloads) > 0
         
         if is_exploitable:
-            message = f"Confirmed Path Traversal vulnerability. {len(successful_payloads)} payloads were successful: {', '.join(successful_payloads[:3])}"
+            message = f"Confirmed Path Traversal vulnerability. {len(successful_payloads)} payloads successfully accessed sensitive files: {', '.join(successful_payloads[:3])}"
         else:
-            message = "Could not confirm Path Traversal vulnerability. No test payloads were successful."
+            message = "Could not confirm Path Traversal vulnerability. No test payloads accessed sensitive files."
         
         return ValidationResult(
             is_exploitable=is_exploitable,
@@ -273,7 +257,7 @@ class PathTraversalValidator(Validator):
                 message="No file path available in finding to validate Path Traversal"
             )
         
-        # Setup a Docker environment for testing
+        # Set up a Docker environment to validate the Path Traversal
         try:
             self.docker_env = DockerEnvironment()
             if not self.docker_env.setup():
@@ -282,62 +266,29 @@ class PathTraversalValidator(Validator):
                     message="Failed to set up Docker environment for validation"
                 )
             
-            # Create container with necessary packages
-            self.docker_env.create_container(name_prefix="path_traversal_validator_", ports={8080: 8080})
+            self.docker_env.create_container(name_prefix="path_traversal_validator_")
             
-            # Install necessary packages
-            self.docker_env.install_python_package("flask")
-            self.docker_env.install_python_package("requests")
+            # Create test files to demonstrate path traversal
+            self._create_test_files()
             
-            # Create a test application based on the finding
-            test_app_path = self._create_test_app(finding)
+            # Create a test script based on the finding
+            script_path = self._create_test_script(finding)
             
-            if not test_app_path:
-                return ValidationResult(
-                    is_exploitable=False,
-                    message="Failed to create test application for Path Traversal validation"
-                )
-            
-            # Copy the test app to the container
-            if not self.docker_env.copy_to_container(test_app_path, "/tmp/test_path_traversal_app.py"):
-                return ValidationResult(
-                    is_exploitable=False,
-                    message="Failed to copy test application to Docker container"
-                )
-            
-            # Create a test script to check for Path Traversal
-            test_script_path = self._create_test_script()
-            
-            if not test_script_path:
+            if not script_path:
                 return ValidationResult(
                     is_exploitable=False,
                     message="Failed to create test script for Path Traversal validation"
                 )
             
-            # Copy the test script to the container
-            if not self.docker_env.copy_to_container(test_script_path, "/tmp/test_path_traversal.py"):
+            # Copy the script to the container
+            if not self.docker_env.copy_to_container(script_path, "/tmp/test_path_traversal.py"):
                 return ValidationResult(
                     is_exploitable=False,
                     message="Failed to copy test script to Docker container"
                 )
             
-            # Create test files
-            self.docker_env.execute_command("mkdir -p /tmp/testfiles")
-            self.docker_env.execute_command("echo 'This is a test file' > /tmp/testfiles/test.txt")
-            self.docker_env.execute_command("echo 'This is a secret file' > /tmp/testfiles/secret.txt")
-            self.docker_env.execute_command("chmod -R 755 /tmp/testfiles")
-            
-            # Start the test app in the background
-            self.docker_env.execute_command("nohup python /tmp/test_path_traversal_app.py > /tmp/app.log 2>&1 &")
-            
-            # Wait for the app to start
-            self.docker_env.execute_command("sleep 2")
-            
             # Execute the test script
             exit_code, stdout, stderr = self.docker_env.execute_command("python /tmp/test_path_traversal.py")
-            
-            # Check application log if needed
-            app_log_code, app_log, _ = self.docker_env.execute_command("cat /tmp/app.log")
             
             # Parse the results
             if exit_code != 0:
@@ -352,11 +303,11 @@ class PathTraversalValidator(Validator):
                 successful_payloads = result.get("successful_payloads", [])
                 
                 evidence = []
-                for test in result.get("tests", []):
+                for payload_result in result.get("tests", []):
                     evidence_item = {
-                        "type": "path_traversal_test",
-                        "description": f"Path Traversal test with payload: {test['payload']}",
-                        "content": json.dumps(test, indent=2)
+                        "type": EvidenceTypeEnum.COMMAND_EXECUTION_OUTPUT.value,
+                        "description": f"Path Traversal test with payload: {payload_result['payload']}",
+                        "content": json.dumps(payload_result, indent=2)
                     }
                     evidence.append(evidence_item)
                 
@@ -376,128 +327,30 @@ class PathTraversalValidator(Validator):
                     is_exploitable=False,
                     message=f"Error parsing test results: {stdout}"
                 )
-        
+            
         finally:
             # Clean up
             if self.docker_env:
                 self.docker_env.cleanup()
                 self.docker_env = None
     
-    def _create_test_app(self, finding: Finding) -> Optional[str]:
+    def _create_test_files(self) -> None:
         """
-        Create a Flask application for testing Path Traversal.
+        Create test files to demonstrate path traversal.
+        """
+        # Create test files
+        self.docker_env.execute_command("mkdir -p /tmp/testfiles")
+        self.docker_env.execute_command("echo 'This is a test file' > /tmp/testfiles/test.txt")
+        self.docker_env.execute_command("echo 'This is a secret file' > /tmp/testfiles/secret.txt")
+        self.docker_env.execute_command("chmod -R 755 /tmp/testfiles")
+    
+    def _create_test_script(self, finding: Finding) -> Optional[str]:
+        """
+        Create a Python script to test for Path Traversal.
         
         Args:
             finding: The finding to validate
             
-        Returns:
-            Path to the created application, or None if failed
-        """
-        try:
-            # Create a temporary file
-            fd, path = tempfile.mkstemp(suffix=".py", prefix="path_traversal_test_app_")
-            
-            # Generate application code
-            code = """
-from flask import Flask, request, send_file, abort
-import os
-
-app = Flask(__name__)
-
-# Base directory for files
-FILES_DIR = '/tmp/testfiles'
-
-@app.route('/')
-def index():
-    return '''
-        <html>
-            <head><title>Path Traversal Test</title></head>
-            <body>
-                <h1>Path Traversal Test Application</h1>
-                <h2>Vulnerable Endpoints</h2>
-                <ul>
-                    <li><a href="/vulnerable?file=test.txt">Vulnerable GET</a></li>
-                    <li>
-                        <form action="/vulnerable_post" method="POST">
-                            <input type="text" name="file" value="test.txt">
-                            <button type="submit">Vulnerable POST</button>
-                        </form>
-                    </li>
-                </ul>
-                <h2>Safe Endpoints</h2>
-                <ul>
-                    <li><a href="/safe?file=test.txt">Safe GET</a></li>
-                </ul>
-            </body>
-        </html>
-    '''
-
-@app.route('/vulnerable')
-def vulnerable():
-    # Vulnerable to path traversal - directly uses user input
-    file_name = request.args.get('file', '')
-    
-    # Construct file path (vulnerable way)
-    file_path = Path(FILES_DIR) / file_name
-    
-    try:
-        return send_file(file_path)
-    except Exception as e:
-        return f"Error: {str(e)}", 404
-
-@app.route('/vulnerable_post', methods=['POST'])
-def vulnerable_post():
-    # Also vulnerable to path traversal
-    file_name = request.form.get('file', '')
-    
-    # Construct file path (vulnerable way)
-    file_path = Path(FILES_DIR) / file_name
-    
-    try:
-        return send_file(file_path)
-    except Exception as e:
-        return f"Error: {str(e)}", 404
-
-@app.route('/safe')
-def safe():
-    # Safe version - validates file name
-    file_name = request.args.get('file', '')
-    
-    # Prevent path traversal by checking that there are no path separators
-    if '/' in file_name or '\\\\' in file_name or '..' in file_name:
-        abort(403)  # Forbidden
-    
-    # Only allow specific files
-    allowed_files = ['test.txt']
-    if file_name not in allowed_files:
-        abort(403)  # Forbidden
-    
-    # Construct file path safely
-    file_path = Path(FILES_DIR) / file_name
-    
-    try:
-        return send_file(file_path)
-    except Exception as e:
-        return f"Error: {str(e)}", 404
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
-"""
-            
-            # Write the code to the file
-            with os.fdopen(fd, 'w') as f:
-                f.write(code)
-            
-            return path
-        
-        except Exception as e:
-            logger.error(f"Error creating test application: {e}", exc_info=True)
-            return None
-    
-    def _create_test_script(self) -> Optional[str]:
-        """
-        Create a Python script to test for Path Traversal.
-        
         Returns:
             Path to the created script, or None if failed
         """
@@ -517,19 +370,37 @@ SERVER_URL = "http://localhost:8080"
 
 # Payloads to test
 PAYLOADS = [
-    "../../../etc/passwd",
-    "..%2F..%2F..%2Fetc%2Fpasswd",
-    "..\\\\..\\\\..\\\\etc\\\\passwd",
-    "/etc/passwd",
-    "../../../../etc/passwd",
-    "....//....//....//etc/passwd",
-    "/%2e%2e/%2e%2e/%2e%2e/etc/passwd",
-    "..%252f..%252f..%252fetc%252fpasswd",
-    "../../../etc/hosts",
-    "../../../../../../../../../../../../../../proc/version",
-    "../testfiles/secret.txt",
-    "..%2Ftestfiles%2Fsecret.txt",
-    "..\\\\testfiles\\\\secret.txt"
+    "../",
+    "../../",
+    "../../../",
+    "../../../../",
+    "../../../../../",
+    "../../../../../../",
+    "../../../../../../../",
+    "../../../../../../../../",
+    "../../../../../../../../../",
+    "../../../../../../../../../../",
+    "../../../../../../../../../../../",
+    "..\\",
+    "..\\..\\",
+    "..\\..\\..\\",
+    "..\\..\\..\\..\\",
+    "..\\..\\..\\..\\..\\",
+    "..\\..\\..\\..\\..\\..\\",
+    "..\\..\\..\\..\\..\\..\\..\\",
+    "..\\..\\..\\..\\..\\..\\..\\..\\",
+    "..\\..\\..\\..\\..\\..\\..\\..\\..\\",
+    "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\",
+    "..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\",
+    "%2e%2e%2f",
+    "%2e%2e%2f%2e%2e%2f",
+    "%2e%2e%2f%2e%2e%2f%2e%2e%2f",
+    "%2e%2e%5c",
+    "%2e%2e%5c%2e%2e%5c",
+    "%2e%2e%5c%2e%2e%5c%2e%2e%5c",
+    "....//",
+    "....\\\\",
+    "....//"
 ]
 
 def detect_path_traversal_success(response):

@@ -7,10 +7,11 @@ import uuid
 import re
 import tempfile
 import os
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 
 from api.core.validator import Validator, ValidationResult
 from api.models.finding import Finding
+from api.models.vxdf import EvidenceTypeEnum
 from api.utils.docker_utils import DockerEnvironment
 from api.utils.http_utils import (
     make_request, inject_payload_in_params, 
@@ -32,28 +33,42 @@ class CommandInjectionValidator(Validator):
         super().__init__()
         self.name = "Command Injection Validator"
         self.payloads = [
-            "| id",
+            "; ls",
+            "&& ls",
+            "|| ls",
+            "| ls",
             "; id",
-            "& id",
             "&& id",
-            "`id`",
+            "|| id",
+            "| id",
+            "; whoami",
+            "&& whoami",
+            "|| whoami",
+            "| whoami",
+            "; sleep 5",
+            "&& sleep 5",
+            "|| sleep 5",
+            "| sleep 5",
+            "; echo 'INJECTED'",
+            "&& echo 'INJECTED'",
+            "|| echo 'INJECTED'",
+            "| echo 'INJECTED'",
+            "$(ls)",
+            "`ls`",
             "$(id)",
-            "; ls -la",
-            "| ls -la",
-            "& ls -la",
-            "&& ls -la",
-            "`ls -la`",
-            "$(ls -la)",
-            "; echo VXDF_VALIDATION_MARKER",
-            "| echo VXDF_VALIDATION_MARKER",
-            "& echo VXDF_VALIDATION_MARKER",
-            "&& echo VXDF_VALIDATION_MARKER",
-            "`echo VXDF_VALIDATION_MARKER`",
-            "$(echo VXDF_VALIDATION_MARKER)",
-            "| cat /etc/passwd",
+            "`id`",
+            "$(whoami)",
+            "`whoami`",
+            "$(echo INJECTED)",
+            "`echo INJECTED`",
             "; cat /etc/passwd",
-            "& cat /etc/passwd",
-            ";cat /etc/passwd"
+            "&& cat /etc/passwd",
+            "|| cat /etc/passwd",
+            "| cat /etc/passwd",
+            "; uname -a",
+            "&& uname -a",
+            "|| uname -a",
+            "| uname -a"
         ]
         self.docker_env = None
     
@@ -165,20 +180,20 @@ class CommandInjectionValidator(Validator):
                         timeout=10
                     )
                     
-                    # Check if command injection was successful
-                    if detect_command_injection_success(response, payload):
+                    # Check for command injection success in response
+                    if detect_command_injection_success(response):
                         successful_payloads.append(payload)
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
-                            "description": f"Command injection with payload: {payload}",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
+                            "description": f"Command Injection with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
                         evidence.append(evidence_item)
                 
                 except Exception as e:
-                    logger.warning(f"Error testing command injection payload: {e}")
+                    logger.warning(f"Error testing Command Injection payload: {e}")
                     continue
             
             # For POST requests, inject into body
@@ -199,29 +214,29 @@ class CommandInjectionValidator(Validator):
                         timeout=10
                     )
                     
-                    # Check if command injection was successful
-                    if detect_command_injection_success(response, payload):
+                    # Check for command injection success in response
+                    if detect_command_injection_success(response):
                         successful_payloads.append(payload)
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
-                            "description": f"Command injection with payload: {payload}",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
+                            "description": f"Command Injection with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
                         evidence.append(evidence_item)
                 
                 except Exception as e:
-                    logger.warning(f"Error testing command injection payload: {e}")
+                    logger.warning(f"Error testing Command Injection payload: {e}")
                     continue
         
         # Determine if exploitable
         is_exploitable = len(successful_payloads) > 0
         
         if is_exploitable:
-            message = f"Confirmed Command Injection vulnerability. {len(successful_payloads)} payloads were successful: {', '.join(successful_payloads[:3])}"
+            message = f"Confirmed Command Injection vulnerability. {len(successful_payloads)} payloads successfully executed commands: {', '.join(successful_payloads[:3])}"
         else:
-            message = "Could not confirm Command Injection vulnerability. No test payloads were successful."
+            message = "Could not confirm Command Injection vulnerability. No test payloads executed commands."
         
         return ValidationResult(
             is_exploitable=is_exploitable,
@@ -246,7 +261,7 @@ class CommandInjectionValidator(Validator):
                 message="No file path available in finding to validate Command Injection"
             )
         
-        # Setup a Docker environment for testing
+        # Set up a Docker environment to validate the Command Injection
         try:
             self.docker_env = DockerEnvironment()
             if not self.docker_env.setup():
@@ -255,56 +270,26 @@ class CommandInjectionValidator(Validator):
                     message="Failed to set up Docker environment for validation"
                 )
             
-            # Create container with necessary packages
-            self.docker_env.create_container(name_prefix="command_injection_validator_", ports={8080: 8080})
+            self.docker_env.create_container(name_prefix="command_injection_validator_")
             
-            # Install necessary packages
-            self.docker_env.install_python_package("flask")
-            self.docker_env.install_python_package("requests")
+            # Create a test script based on the finding
+            script_path = self._create_test_script(finding)
             
-            # Create a test application based on the finding
-            test_app_path = self._create_test_app(finding)
-            
-            if not test_app_path:
-                return ValidationResult(
-                    is_exploitable=False,
-                    message="Failed to create test application for Command Injection validation"
-                )
-            
-            # Copy the test app to the container
-            if not self.docker_env.copy_to_container(test_app_path, "/tmp/test_command_injection_app.py"):
-                return ValidationResult(
-                    is_exploitable=False,
-                    message="Failed to copy test application to Docker container"
-                )
-            
-            # Create a test script to check for Command Injection
-            test_script_path = self._create_test_script()
-            
-            if not test_script_path:
+            if not script_path:
                 return ValidationResult(
                     is_exploitable=False,
                     message="Failed to create test script for Command Injection validation"
                 )
             
-            # Copy the test script to the container
-            if not self.docker_env.copy_to_container(test_script_path, "/tmp/test_command_injection.py"):
+            # Copy the script to the container
+            if not self.docker_env.copy_to_container(script_path, "/tmp/test_command_injection.py"):
                 return ValidationResult(
                     is_exploitable=False,
                     message="Failed to copy test script to Docker container"
                 )
             
-            # Start the test app in the background
-            self.docker_env.execute_command("nohup python /tmp/test_command_injection_app.py > /tmp/app.log 2>&1 &")
-            
-            # Wait for the app to start
-            self.docker_env.execute_command("sleep 2")
-            
             # Execute the test script
             exit_code, stdout, stderr = self.docker_env.execute_command("python /tmp/test_command_injection.py")
-            
-            # Check application log if needed
-            app_log_code, app_log, _ = self.docker_env.execute_command("cat /tmp/app.log")
             
             # Parse the results
             if exit_code != 0:
@@ -319,11 +304,11 @@ class CommandInjectionValidator(Validator):
                 successful_payloads = result.get("successful_payloads", [])
                 
                 evidence = []
-                for test in result.get("tests", []):
+                for payload_result in result.get("tests", []):
                     evidence_item = {
-                        "type": "command_injection_test",
-                        "description": f"Command Injection test with payload: {test['payload']}",
-                        "content": json.dumps(test, indent=2)
+                        "type": EvidenceTypeEnum.COMMAND_EXECUTION_OUTPUT.value,
+                        "description": f"Command Injection test with payload: {payload_result['payload']}",
+                        "content": json.dumps(payload_result, indent=2)
                     }
                     evidence.append(evidence_item)
                 
@@ -343,129 +328,20 @@ class CommandInjectionValidator(Validator):
                     is_exploitable=False,
                     message=f"Error parsing test results: {stdout}"
                 )
-        
+            
         finally:
             # Clean up
             if self.docker_env:
                 self.docker_env.cleanup()
                 self.docker_env = None
     
-    def _create_test_app(self, finding: Finding) -> Optional[str]:
+    def _create_test_script(self, finding: Finding) -> Optional[str]:
         """
-        Create a Flask application for testing Command Injection.
+        Create a Python script to test for Command Injection.
         
         Args:
             finding: The finding to validate
             
-        Returns:
-            Path to the created application, or None if failed
-        """
-        try:
-            # Create a temporary file
-            fd, path = tempfile.mkstemp(suffix=".py", prefix="command_injection_test_app_")
-            
-            # Generate application code
-            code = """
-from flask import Flask, request, jsonify
-import subprocess
-import os
-import shlex
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return '''
-        <html>
-            <head><title>Command Injection Test</title></head>
-            <body>
-                <h1>Command Injection Test Application</h1>
-                <h2>Vulnerable Endpoints</h2>
-                <ul>
-                    <li><a href="/ping?host=localhost">Ping Host (Vulnerable)</a></li>
-                    <li>
-                        <form action="/exec" method="POST">
-                            <input type="text" name="command" value="ls">
-                            <button type="submit">Execute Command (Vulnerable)</button>
-                        </form>
-                    </li>
-                </ul>
-                <h2>Safe Endpoints</h2>
-                <ul>
-                    <li><a href="/ping_safe?host=localhost">Ping Host (Safe)</a></li>
-                </ul>
-            </body>
-        </html>
-    '''
-
-@app.route('/ping')
-def ping():
-    # Vulnerable to command injection
-    host = request.args.get('host', '')
-    
-    # Vulnerable way to execute command
-    cmd = f"ping -c 1 {host}"
-    try:
-        output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=5)
-        return f"<pre>{output.decode('utf-8')}</pre>"
-    except subprocess.CalledProcessError as e:
-        return f"<pre>Error: {e.output.decode('utf-8')}</pre>"
-    except subprocess.TimeoutExpired:
-        return "<pre>Error: Command timed out</pre>"
-
-@app.route('/exec', methods=['POST'])
-def exec_command():
-    # Vulnerable to command injection
-    command = request.form.get('command', '')
-    
-    # Vulnerable way to execute command
-    try:
-        output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, timeout=5)
-        return f"<pre>{output.decode('utf-8')}</pre>"
-    except subprocess.CalledProcessError as e:
-        return f"<pre>Error: {e.output.decode('utf-8')}</pre>"
-    except subprocess.TimeoutExpired:
-        return "<pre>Error: Command timed out</pre>"
-
-@app.route('/ping_safe')
-def ping_safe():
-    # Safe version
-    host = request.args.get('host', '')
-    
-    # Validate input
-    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9.-]*$', host):
-        return "<pre>Error: Invalid hostname</pre>"
-    
-    # Safe way to execute command
-    try:
-        args = ['ping', '-c', '1', host]
-        output = subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=5)
-        return f"<pre>{output.decode('utf-8')}</pre>"
-    except subprocess.CalledProcessError as e:
-        return f"<pre>Error: {e.output.decode('utf-8')}</pre>"
-    except subprocess.TimeoutExpired:
-        return "<pre>Error: Command timed out</pre>"
-
-import re
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
-"""
-            
-            # Write the code to the file
-            with os.fdopen(fd, 'w') as f:
-                f.write(code)
-            
-            return path
-        
-        except Exception as e:
-            logger.error(f"Error creating test application: {e}", exc_info=True)
-            return None
-    
-    def _create_test_script(self) -> Optional[str]:
-        """
-        Create a Python script to test for Command Injection.
-        
         Returns:
             Path to the created script, or None if failed
         """

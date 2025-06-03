@@ -1,354 +1,97 @@
-2025-06-01 23:40:41,959 - INFO - Starting VXDF Validate on port 6789
-2025-06-01 23:40:41,960 - INFO - Creating database tables...
-2025-06-01 23:40:41,963 - INFO - Database tables created successfully.
-2025-06-01 23:40:41,973 - INFO - API blueprint registered
-2025-06-01 23:40:42,039 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:6789
- * Running on http://10.0.0.240:6789
-2025-06-01 23:40:42,039 - INFO - [33mPress CTRL+C to quit[0m
-2025-06-01 23:40:42,039 - INFO -  * Restarting with stat
-2025-06-01 23:40:42,288 - INFO - Starting VXDF Validate on port 6789
-2025-06-01 23:40:42,288 - INFO - Creating database tables...
-2025-06-01 23:40:42,289 - INFO - Database tables created successfully.
-2025-06-01 23:40:42,291 - INFO - API blueprint registered
-2025-06-01 23:40:42,306 - WARNING -  * Debugger is active!
-2025-06-01 23:40:42,311 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:40:42,325 - INFO - 127.0.0.1 - - [01/Jun/2025 23:40:42] "GET /api/stats HTTP/1.1" 200 -
-2025-06-01 23:40:43,362 - INFO - 127.0.0.1 - - [01/Jun/2025 23:40:43] "GET /api/stats HTTP/1.1" 200 -
-2025-06-01 23:41:03,228 - INFO - 127.0.0.1 - - [01/Jun/2025 23:41:03] "[33mGET / HTTP/1.1[0m" 404 -
-2025-06-01 23:43:04,911 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:43:04,911 - INFO - Creating database tables...
-2025-06-01 23:43:04,912 - INFO - Database tables created successfully.
-2025-06-01 23:43:04,914 - INFO - API blueprint registered
-2025-06-01 23:43:04,939 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:6790
- * Running on http://10.0.0.240:6790
-2025-06-01 23:43:04,940 - INFO - [33mPress CTRL+C to quit[0m
-2025-06-01 23:43:04,940 - INFO -  * Restarting with stat
-2025-06-01 23:43:05,172 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:43:05,173 - INFO - Creating database tables...
-2025-06-01 23:43:05,173 - INFO - Database tables created successfully.
-2025-06-01 23:43:05,176 - INFO - API blueprint registered
-2025-06-01 23:43:05,192 - WARNING -  * Debugger is active!
-2025-06-01 23:43:05,196 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:44:05,399 - INFO - 127.0.0.1 - - [01/Jun/2025 23:44:05] "GET /api/vulnerabilities?limit=5&validated=true HTTP/1.1" 200 -
-2025-06-01 23:44:05,399 - INFO - 127.0.0.1 - - [01/Jun/2025 23:44:05] "GET /api/stats HTTP/1.1" 200 -
-2025-06-01 23:44:13,387 - INFO - 127.0.0.1 - - [01/Jun/2025 23:44:13] "GET /api/vulnerabilities?limit=5&validated=true HTTP/1.1" 200 -
-2025-06-01 23:44:13,417 - INFO - 127.0.0.1 - - [01/Jun/2025 23:44:13] "GET /api/stats HTTP/1.1" 200 -
-2025-06-01 23:47:56,812 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/populate_test_data.py', reloading
-2025-06-01 23:47:56,874 - INFO -  * Restarting with stat
-2025-06-01 23:47:57,222 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:47:57,223 - INFO - Creating database tables...
-2025-06-01 23:47:57,224 - INFO - Database tables created successfully.
-2025-06-01 23:47:57,228 - INFO - API blueprint registered
-2025-06-01 23:47:57,250 - WARNING -  * Debugger is active!
-2025-06-01 23:47:57,256 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:48:26,620 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/core/validator.py', reloading
-2025-06-01 23:48:26,674 - INFO -  * Restarting with stat
-2025-06-01 23:48:26,933 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:48:26,933 - INFO - Creating database tables...
-2025-06-01 23:48:26,934 - INFO - Database tables created successfully.
-2025-06-01 23:48:26,937 - INFO - API blueprint registered
-2025-06-01 23:48:26,955 - WARNING -  * Debugger is active!
-2025-06-01 23:48:26,959 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:48:49,203 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/validators/sql_injection.py', reloading
-2025-06-01 23:48:49,258 - INFO -  * Restarting with stat
-2025-06-01 23:48:49,521 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:48:49,521 - INFO - Creating database tables...
-2025-06-01 23:48:49,522 - INFO - Database tables created successfully.
-2025-06-01 23:48:49,525 - INFO - API blueprint registered
-2025-06-01 23:48:49,541 - WARNING -  * Debugger is active!
-2025-06-01 23:48:49,545 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:49:12,808 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/validators/xss.py', reloading
-2025-06-01 23:49:12,860 - INFO -  * Restarting with stat
-2025-06-01 23:49:13,116 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:49:13,117 - INFO - Creating database tables...
-2025-06-01 23:49:13,118 - INFO - Database tables created successfully.
-2025-06-01 23:49:13,121 - INFO - API blueprint registered
-2025-06-01 23:49:13,138 - WARNING -  * Debugger is active!
-2025-06-01 23:49:13,143 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:49:39,449 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/validators/path_traversal.py', reloading
-2025-06-01 23:49:39,506 - INFO -  * Restarting with stat
-2025-06-01 23:49:39,772 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:49:39,773 - INFO - Creating database tables...
-2025-06-01 23:49:39,773 - INFO - Database tables created successfully.
-2025-06-01 23:49:39,776 - INFO - API blueprint registered
-2025-06-01 23:49:39,793 - WARNING -  * Debugger is active!
-2025-06-01 23:49:39,798 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:50:08,129 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/demo/vulnerable_app.py', reloading
-2025-06-01 23:50:08,194 - INFO -  * Restarting with stat
-2025-06-01 23:50:08,474 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:50:08,474 - INFO - Creating database tables...
-2025-06-01 23:50:08,475 - INFO - Database tables created successfully.
-2025-06-01 23:50:08,478 - INFO - API blueprint registered
-2025-06-01 23:50:08,495 - WARNING -  * Debugger is active!
-2025-06-01 23:50:08,500 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:50:28,712 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/populate_test_findings.py', reloading
-2025-06-01 23:50:28,767 - INFO -  * Restarting with stat
-2025-06-01 23:50:29,035 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:50:29,036 - INFO - Creating database tables...
-2025-06-01 23:50:29,037 - INFO - Database tables created successfully.
-2025-06-01 23:50:29,040 - INFO - API blueprint registered
-2025-06-01 23:50:29,056 - WARNING -  * Debugger is active!
-2025-06-01 23:50:29,060 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:51:00,908 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:00] "GET /api/vulnerabilities?limit=5&validated=true HTTP/1.1" 200 -
-2025-06-01 23:51:00,909 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:00] "GET /api/stats HTTP/1.1" 200 -
-2025-06-01 23:51:22,279 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:22] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:22,400 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:22] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:23,412 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:23] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:25,416 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:25] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:29,422 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:29] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:33,836 - INFO - Starting VXDF Validate on port 5001
-2025-06-01 23:51:33,837 - INFO - Creating database tables...
-2025-06-01 23:51:33,837 - INFO - Database tables created successfully.
-2025-06-01 23:51:33,841 - INFO - API blueprint registered
-2025-06-01 23:51:33,868 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:5001
- * Running on http://10.0.0.240:5001
-2025-06-01 23:51:33,868 - INFO - [33mPress CTRL+C to quit[0m
-2025-06-01 23:51:33,869 - INFO -  * Restarting with stat
-2025-06-01 23:51:34,112 - INFO - Starting VXDF Validate on port 5001
-2025-06-01 23:51:34,112 - INFO - Creating database tables...
-2025-06-01 23:51:34,113 - INFO - Database tables created successfully.
-2025-06-01 23:51:34,116 - INFO - API blueprint registered
-2025-06-01 23:51:34,131 - WARNING -  * Debugger is active!
-2025-06-01 23:51:34,136 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:51:49,252 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:49] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:50,263 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:50] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:52,274 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:52] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:51:56,280 - INFO - 127.0.0.1 - - [01/Jun/2025 23:51:56] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:52:10,085 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/populate_test_findings.py', reloading
-2025-06-01 23:52:10,145 - INFO -  * Restarting with stat
-2025-06-01 23:52:10,443 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:52:10,444 - INFO - Creating database tables...
-2025-06-01 23:52:10,445 - INFO - Database tables created successfully.
-2025-06-01 23:52:10,449 - INFO - API blueprint registered
-2025-06-01 23:52:10,468 - WARNING -  * Debugger is active!
-2025-06-01 23:52:10,473 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:52:10,531 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/populate_test_findings.py', reloading
-2025-06-01 23:52:10,579 - INFO -  * Restarting with stat
-2025-06-01 23:52:10,839 - INFO - Starting VXDF Validate on port 5001
-2025-06-01 23:52:10,840 - INFO - Creating database tables...
-2025-06-01 23:52:10,840 - INFO - Database tables created successfully.
-2025-06-01 23:52:10,843 - INFO - API blueprint registered
-2025-06-01 23:52:10,860 - WARNING -  * Debugger is active!
-2025-06-01 23:52:10,865 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:52:20,215 - INFO - 127.0.0.1 - - [01/Jun/2025 23:52:20] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:52:39,802 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/populate_test_findings.py', reloading
-2025-06-01 23:52:39,856 - INFO -  * Restarting with stat
-2025-06-01 23:52:40,112 - INFO - Starting VXDF Validate on port 6790
-2025-06-01 23:52:40,112 - INFO - Creating database tables...
-2025-06-01 23:52:40,113 - INFO - Database tables created successfully.
-2025-06-01 23:52:40,116 - INFO - API blueprint registered
-2025-06-01 23:52:40,132 - WARNING -  * Debugger is active!
-2025-06-01 23:52:40,137 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:52:40,187 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/populate_test_findings.py', reloading
-2025-06-01 23:52:40,237 - INFO -  * Restarting with stat
-2025-06-01 23:52:40,504 - INFO - Starting VXDF Validate on port 5001
-2025-06-01 23:52:40,504 - INFO - Creating database tables...
-2025-06-01 23:52:40,505 - INFO - Database tables created successfully.
-2025-06-01 23:52:40,508 - INFO - API blueprint registered
-2025-06-01 23:52:40,523 - WARNING -  * Debugger is active!
-2025-06-01 23:52:40,528 - INFO -  * Debugger PIN: 401-236-898
-2025-06-01 23:53:18,118 - INFO - 127.0.0.1 - - [01/Jun/2025 23:53:18] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:53:19,130 - INFO - 127.0.0.1 - - [01/Jun/2025 23:53:19] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:53:21,138 - INFO - 127.0.0.1 - - [01/Jun/2025 23:53:21] "GET /api/findings HTTP/1.1" 200 -
-2025-06-01 23:53:25,148 - INFO - 127.0.0.1 - - [01/Jun/2025 23:53:25] "GET /api/findings HTTP/1.1" 200 -
-2025-06-02 00:19:12,794 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on http://127.0.0.1:6790
-2025-06-02 00:19:12,795 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
-2025-06-02 00:19:18,197 - werkzeug - INFO - 127.0.0.1 - - [02/Jun/2025 00:19:18] "GET /api/health HTTP/1.1" 200 -
-2025-06-02 00:23:04,081 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:23:04,082 - INFO - Creating database tables...
-2025-06-02 00:23:04,085 - INFO - Database tables created successfully.
-2025-06-02 00:23:04,088 - INFO - API blueprint registered
-2025-06-02 00:23:04,122 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:6789
- * Running on http://10.0.0.240:6789
-2025-06-02 00:23:04,122 - INFO - [33mPress CTRL+C to quit[0m
-2025-06-02 00:23:04,123 - INFO -  * Restarting with stat
-2025-06-02 00:23:04,367 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:23:04,368 - INFO - Creating database tables...
-2025-06-02 00:23:04,368 - INFO - Database tables created successfully.
-2025-06-02 00:23:04,371 - INFO - API blueprint registered
-2025-06-02 00:23:04,386 - WARNING -  * Debugger is active!
-2025-06-02 00:23:04,391 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:23:04,833 - INFO - 127.0.0.1 - - [02/Jun/2025 00:23:04] "GET /api/stats HTTP/1.1" 200 -
-2025-06-02 00:23:05,876 - INFO - 127.0.0.1 - - [02/Jun/2025 00:23:05] "GET /api/stats HTTP/1.1" 200 -
-2025-06-02 00:23:20,205 - INFO - 127.0.0.1 - - [02/Jun/2025 00:23:20] "GET /api/vulnerabilities?limit=5&validated=true HTTP/1.1" 200 -
-2025-06-02 00:23:20,206 - INFO - 127.0.0.1 - - [02/Jun/2025 00:23:20] "GET /api/stats HTTP/1.1" 200 -
-2025-06-02 00:23:44,261 - INFO - 127.0.0.1 - - [02/Jun/2025 00:23:44] "GET /api/stats HTTP/1.1" 200 -
-2025-06-02 00:34:31,037 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:34:31,123 - INFO -  * Restarting with stat
-2025-06-02 00:34:31,453 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:34:31,453 - INFO - Creating database tables...
-2025-06-02 00:34:31,454 - INFO - Database tables created successfully.
-2025-06-02 00:34:31,458 - INFO - API blueprint registered
-2025-06-02 00:34:31,475 - WARNING -  * Debugger is active!
-2025-06-02 00:34:31,479 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:34:59,904 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:34:59,964 - INFO -  * Restarting with stat
-2025-06-02 00:35:00,195 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:35:00,195 - INFO - Creating database tables...
-2025-06-02 00:35:00,196 - INFO - Database tables created successfully.
-2025-06-02 00:35:00,199 - INFO - API blueprint registered
-2025-06-02 00:35:00,213 - WARNING -  * Debugger is active!
-2025-06-02 00:35:00,217 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:35:19,487 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:35:19,542 - INFO -  * Restarting with stat
-2025-06-02 00:35:19,787 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:35:19,787 - INFO - Creating database tables...
-2025-06-02 00:35:19,788 - INFO - Database tables created successfully.
-2025-06-02 00:35:19,790 - INFO - API blueprint registered
-2025-06-02 00:35:19,805 - WARNING -  * Debugger is active!
-2025-06-02 00:35:19,810 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:35:33,970 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:35:34,024 - INFO -  * Restarting with stat
-2025-06-02 00:35:34,254 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:35:34,255 - INFO - Creating database tables...
-2025-06-02 00:35:34,255 - INFO - Database tables created successfully.
-2025-06-02 00:35:34,258 - INFO - API blueprint registered
-2025-06-02 00:35:34,272 - WARNING -  * Debugger is active!
-2025-06-02 00:35:34,275 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:35:59,603 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:35:59,671 - INFO -  * Restarting with stat
-2025-06-02 00:35:59,900 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:35:59,901 - INFO - Creating database tables...
-2025-06-02 00:35:59,901 - INFO - Database tables created successfully.
-2025-06-02 00:35:59,904 - INFO - API blueprint registered
-2025-06-02 00:35:59,918 - WARNING -  * Debugger is active!
-2025-06-02 00:35:59,921 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:36:30,334 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/core/engine.py', reloading
-2025-06-02 00:36:30,398 - INFO -  * Restarting with stat
-2025-06-02 00:36:30,646 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:36:30,647 - INFO - Creating database tables...
-2025-06-02 00:36:30,648 - INFO - Database tables created successfully.
-2025-06-02 00:36:30,650 - INFO - API blueprint registered
-2025-06-02 00:36:30,666 - WARNING -  * Debugger is active!
-2025-06-02 00:36:30,670 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:37:38,535 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/core/validator.py', reloading
-2025-06-02 00:37:38,594 - INFO -  * Restarting with stat
-2025-06-02 00:37:38,929 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:37:38,929 - INFO - Creating database tables...
-2025-06-02 00:37:38,930 - INFO - Database tables created successfully.
-2025-06-02 00:37:38,934 - INFO - API blueprint registered
-2025-06-02 00:37:38,953 - WARNING -  * Debugger is active!
-2025-06-02 00:37:38,957 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:37:48,082 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:37:48,139 - INFO -  * Restarting with stat
-2025-06-02 00:37:48,373 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:37:48,373 - INFO - Creating database tables...
-2025-06-02 00:37:48,374 - INFO - Database tables created successfully.
-2025-06-02 00:37:48,376 - INFO - API blueprint registered
-2025-06-02 00:37:48,390 - WARNING -  * Debugger is active!
-2025-06-02 00:37:48,394 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:38:53,303 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/core/validator.py', reloading
-2025-06-02 00:38:53,363 - INFO -  * Restarting with stat
-2025-06-02 00:38:53,684 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:38:53,684 - INFO - Creating database tables...
-2025-06-02 00:38:53,684 - INFO - Database tables created successfully.
-2025-06-02 00:38:53,688 - INFO - API blueprint registered
-2025-06-02 00:38:53,705 - WARNING -  * Debugger is active!
-2025-06-02 00:38:53,710 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:39:57,476 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/parsers/sarif_parser.py', reloading
-2025-06-02 00:39:57,529 - INFO -  * Restarting with stat
-2025-06-02 00:39:57,852 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:39:57,852 - INFO - Creating database tables...
-2025-06-02 00:39:57,853 - INFO - Database tables created successfully.
-2025-06-02 00:39:57,857 - INFO - API blueprint registered
-2025-06-02 00:39:57,875 - WARNING -  * Debugger is active!
-2025-06-02 00:39:57,880 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:41:52,615 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:41:52,675 - INFO -  * Restarting with stat
-2025-06-02 00:41:52,996 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:41:52,996 - INFO - Creating database tables...
-2025-06-02 00:41:52,997 - INFO - Database tables created successfully.
-2025-06-02 00:41:53,001 - INFO - API blueprint registered
-2025-06-02 00:41:53,018 - WARNING -  * Debugger is active!
-2025-06-02 00:41:53,023 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:44:19,072 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/validators/sql_injection.py', reloading
-2025-06-02 00:44:19,116 - INFO -  * Restarting with stat
-2025-06-02 00:44:19,357 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:44:19,358 - INFO - Creating database tables...
-2025-06-02 00:44:19,358 - INFO - Database tables created successfully.
-2025-06-02 00:44:19,361 - INFO - API blueprint registered
-2025-06-02 00:44:19,376 - WARNING -  * Debugger is active!
-2025-06-02 00:44:19,380 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:48:27,901 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:48:27,958 - INFO -  * Restarting with stat
-2025-06-02 00:48:28,197 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:48:28,197 - INFO - Creating database tables...
-2025-06-02 00:48:28,198 - INFO - Database tables created successfully.
-2025-06-02 00:48:28,200 - INFO - API blueprint registered
-2025-06-02 00:48:28,215 - WARNING -  * Debugger is active!
-2025-06-02 00:48:28,218 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:51:39,927 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:51:39,978 - INFO -  * Restarting with stat
-2025-06-02 00:51:40,245 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:51:40,246 - INFO - Creating database tables...
-2025-06-02 00:51:40,246 - INFO - Database tables created successfully.
-2025-06-02 00:51:40,251 - INFO - API blueprint registered
-2025-06-02 00:51:40,272 - WARNING -  * Debugger is active!
-2025-06-02 00:51:40,277 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 00:55:20,571 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 00:55:20,645 - INFO -  * Restarting with stat
-2025-06-02 00:55:20,892 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 00:55:20,892 - INFO - Creating database tables...
-2025-06-02 00:55:20,893 - INFO - Database tables created successfully.
-2025-06-02 00:55:20,896 - INFO - API blueprint registered
-2025-06-02 00:55:20,910 - WARNING -  * Debugger is active!
-2025-06-02 00:55:20,914 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 01:11:48,732 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/validators/sql_injection.py', reloading
-2025-06-02 01:11:48,774 - INFO -  * Restarting with stat
-2025-06-02 01:11:49,038 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 01:11:49,039 - INFO - Creating database tables...
-2025-06-02 01:11:49,039 - INFO - Database tables created successfully.
-2025-06-02 01:11:49,044 - INFO - API blueprint registered
-2025-06-02 01:11:49,065 - WARNING -  * Debugger is active!
-2025-06-02 01:11:49,070 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 01:12:18,442 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 01:12:18,497 - INFO -  * Restarting with stat
-2025-06-02 01:12:18,725 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 01:12:18,725 - INFO - Creating database tables...
-2025-06-02 01:12:18,726 - INFO - Database tables created successfully.
-2025-06-02 01:12:18,728 - INFO - API blueprint registered
-2025-06-02 01:12:18,742 - WARNING -  * Debugger is active!
-2025-06-02 01:12:18,745 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 01:13:26,545 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/validators/sql_injection.py', reloading
-2025-06-02 01:13:26,584 - INFO -  * Restarting with stat
-2025-06-02 01:13:26,812 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 01:13:26,813 - INFO - Creating database tables...
-2025-06-02 01:13:26,813 - INFO - Database tables created successfully.
-2025-06-02 01:13:26,816 - INFO - API blueprint registered
-2025-06-02 01:13:26,831 - WARNING -  * Debugger is active!
-2025-06-02 01:13:26,835 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 01:13:39,996 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 01:13:40,082 - INFO -  * Restarting with stat
-2025-06-02 01:13:40,322 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 01:13:40,323 - INFO - Creating database tables...
-2025-06-02 01:13:40,323 - INFO - Database tables created successfully.
-2025-06-02 01:13:40,326 - INFO - API blueprint registered
-2025-06-02 01:13:40,342 - WARNING -  * Debugger is active!
-2025-06-02 01:13:40,346 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 01:15:35,722 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/validators/sql_injection.py', reloading
-2025-06-02 01:15:35,812 - INFO -  * Restarting with stat
-2025-06-02 01:15:36,055 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 01:15:36,055 - INFO - Creating database tables...
-2025-06-02 01:15:36,056 - INFO - Database tables created successfully.
-2025-06-02 01:15:36,058 - INFO - API blueprint registered
-2025-06-02 01:15:36,074 - WARNING -  * Debugger is active!
-2025-06-02 01:15:36,078 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 01:15:49,215 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/scripts/validate_sarif_cli.py', reloading
-2025-06-02 01:15:49,267 - INFO -  * Restarting with stat
-2025-06-02 01:15:49,500 - INFO - Starting VXDF Validate on port 6789
-2025-06-02 01:15:49,500 - INFO - Creating database tables...
-2025-06-02 01:15:49,501 - INFO - Database tables created successfully.
-2025-06-02 01:15:49,504 - INFO - API blueprint registered
-2025-06-02 01:15:49,518 - WARNING -  * Debugger is active!
-2025-06-02 01:15:49,522 - INFO -  * Debugger PIN: 401-236-898
-2025-06-02 01:17:21,600 - INFO -  * Detected change in '/Users/mihirshah/projects/VXDF/vxdf/api/core/engine.py', reloading
-2025-06-02 01:17:21,647 - INFO -  * Restarting with stat
+2025-06-03 00:56:00,943 - INFO - Starting VXDF Validate server on port 5001
+2025-06-03 00:56:00,943 - INFO - Project root: /Users/mihir.shah/projects/vxdf
+2025-06-03 00:56:00,943 - INFO - API directory: /Users/mihir.shah/projects/vxdf/api
+2025-06-03 00:56:00,943 - INFO - Python path: ['/Users/mihir.shah/projects/vxdf', '/Users/mihir.shah/projects/vxdf/api', '/Users/mihir.shah/.pyenv/versions/3.8.12/lib/python38.zip']...
+2025-06-03 00:56:00,944 - INFO - Initializing database...
+2025-06-03 00:56:00,944 - INFO - Creating database tables...
+2025-06-03 00:56:00,949 - INFO - Database tables created successfully.
+2025-06-03 00:56:00,949 - INFO - Database initialized successfully
+2025-06-03 00:56:00,958 - INFO - Importing API blueprint from api.api
+2025-06-03 00:56:00,961 - INFO - API blueprint registered successfully
+2025-06-03 00:56:00,961 - INFO - ✅ Server created successfully
+2025-06-03 00:56:00,984 - WARNING -  * Debugger is active!
+2025-06-03 00:56:01,008 - INFO -  * Debugger PIN: 108-751-198
+2025-06-03 00:56:32,748 - INFO - Initializing database...
+2025-06-03 00:56:32,748 - INFO - Creating database tables...
+2025-06-03 00:56:32,750 - INFO - Database tables created successfully.
+2025-06-03 00:56:32,750 - INFO - Database initialized successfully
+2025-06-03 00:56:32,754 - INFO - Importing API blueprint from api.api
+2025-06-03 00:56:32,756 - INFO - API blueprint registered successfully
+2025-06-03 00:56:46,728 - INFO - 127.0.0.1 - - [03/Jun/2025 00:56:46] "GET /api/findings HTTP/1.1" 200 -
+2025-06-03 00:56:46,734 - INFO - Parsing SARIF file: /var/folders/8p/27lgr6yj0fx40q8y2knrggv80000gn/T/tmpz32r2rljtest_scan.sarif
+2025-06-03 00:56:46,734 - INFO - Extracted 2 security findings from SARIF file
+2025-06-03 00:56:46,734 - INFO - Parser sarif extracted 2 findings
+2025-06-03 00:56:46,736 - WARNING - No findings matched for evidence item with matcher: {'cwe_match': 89}
+2025-06-03 00:56:46,736 - WARNING - No findings matched for evidence item with matcher: {'cwe_match': 89}
+2025-06-03 00:56:46,736 - INFO - Created evidence None for finding d0e5b1dd-660d-40c3-88b3-e76a362a32de
+2025-06-03 00:56:46,736 - INFO - Created evidence None for finding 8f9386c6-44e6-4e7d-a506-7b37623e2dc2
+2025-06-03 00:56:46,736 - INFO - Created evidence None for finding d0e5b1dd-660d-40c3-88b3-e76a362a32de
+2025-06-03 00:56:46,738 - INFO - Validating finding: 18c369c8-ee99-4094-b587-3354357df2b6 - SQL_INJECTION_001
+2025-06-03 00:56:46,834 - INFO - Running validation for sql_injection
+2025-06-03 00:56:46,834 - INFO - Validating SQL Injection vulnerability: 18c369c8-ee99-4094-b587-3354357df2b6
+2025-06-03 00:56:46,871 - INFO - Pulling Docker image: python:3.9-slim
+2025-06-03 00:56:48,333 - INFO - Created Docker container: 8812f306b2bede939e19aaf068d1ee379bbac089abde061eb4707f180166931b (sql_injection_validator_0776ea48)
+2025-06-03 00:56:51,982 - INFO - Stopping Docker container: 8812f306b2bede939e19aaf068d1ee379bbac089abde061eb4707f180166931b
+2025-06-03 00:57:02,107 - INFO - Removing Docker container: 8812f306b2bede939e19aaf068d1ee379bbac089abde061eb4707f180166931b
+2025-06-03 00:57:02,147 - INFO - Removing temporary directory: /var/folders/8p/27lgr6yj0fx40q8y2knrggv80000gn/T/vxdf_validate_hz5a49im
+2025-06-03 00:57:02,148 - INFO - Processing 33 evidence items from validation
+2025-06-03 00:57:02,153 - ERROR - Finding 18c369c8-ee99-4094-b587-3354357df2b6 not found
+2025-06-03 00:57:02,153 - ERROR - Failed to update finding 18c369c8-ee99-4094-b587-3354357df2b6
+2025-06-03 00:57:02,153 - INFO - Validating finding: 199ce4c1-1efb-497c-b954-e008e8215cd3 - XSS_STORED_001
+2025-06-03 00:57:02,156 - ERROR - Error importing XSS validator: cannot import name 'detect_xss_success' from 'api.utils.http_utils' (/Users/mihir.shah/projects/vxdf/api/utils/http_utils.py)
+2025-06-03 00:57:02,156 - INFO - Running validation for xss
+2025-06-03 00:57:02,157 - WARNING - Using default validator for xss. Validation will be skipped.
+2025-06-03 00:57:02,157 - INFO - Processing 1 evidence items from validation
+2025-06-03 00:57:02,157 - ERROR - Finding 199ce4c1-1efb-497c-b954-e008e8215cd3 not found
+2025-06-03 00:57:02,157 - ERROR - Failed to update finding 199ce4c1-1efb-497c-b954-e008e8215cd3
+2025-06-03 00:57:02,157 - INFO - Generating VXDF document for 2 findings
+2025-06-03 00:57:02,158 - INFO - Correlated 2 findings into 2 groups
+2025-06-03 00:57:02,158 - INFO - Generated VXDF document with 2 exploit flows
+2025-06-03 00:57:02,159 - INFO - 127.0.0.1 - - [03/Jun/2025 00:57:02] "POST /api/upload HTTP/1.1" 200 -
+2025-06-03 00:57:02,164 - INFO - 127.0.0.1 - - [03/Jun/2025 00:57:02] "[33mPOST /api/findings/99999/attach_evidence_file HTTP/1.1[0m" 404 -
+2025-06-03 00:57:02,168 - INFO - Parsing SARIF file: /var/folders/8p/27lgr6yj0fx40q8y2knrggv80000gn/T/tmp2gqjbknftest.sarif
+2025-06-03 00:57:02,168 - INFO - Extracted 0 security findings from SARIF file
+2025-06-03 00:57:02,168 - INFO - Parser sarif extracted 0 findings
+2025-06-03 00:57:02,168 - ERROR - Invalid JSON in external_evidence_json: Expecting value: line 1 column 1 (char 0)
+2025-06-03 00:57:02,169 - INFO - 127.0.0.1 - - [03/Jun/2025 00:57:02] "[31m[1mPOST /api/upload HTTP/1.1[0m" 400 -
+2025-06-03 00:57:02,173 - INFO - Parsing SARIF file: /var/folders/8p/27lgr6yj0fx40q8y2knrggv80000gn/T/tmpr3dazgbgtest_scan.sarif
+2025-06-03 00:57:02,173 - INFO - Extracted 0 security findings from SARIF file
+2025-06-03 00:57:02,173 - INFO - Parser sarif extracted 0 findings
+2025-06-03 00:57:02,174 - INFO - Generating VXDF document for 0 findings
+2025-06-03 00:57:02,174 - INFO - Correlated 0 findings into 0 groups
+2025-06-03 00:57:02,174 - INFO - No security findings detected - creating summary flow
+2025-06-03 00:57:02,174 - INFO - Generated VXDF document with 1 exploit flows
+2025-06-03 00:57:02,175 - INFO - 127.0.0.1 - - [03/Jun/2025 00:57:02] "POST /api/upload HTTP/1.1" 200 -
+2025-06-03 00:57:02,179 - INFO - Parsing SARIF file: /var/folders/8p/27lgr6yj0fx40q8y2knrggv80000gn/T/tmpp99lyoxqtest_scan.sarif
+2025-06-03 00:57:02,180 - INFO - Extracted 0 security findings from SARIF file
+2025-06-03 00:57:02,180 - INFO - Parser sarif extracted 0 findings
+2025-06-03 00:57:02,180 - WARNING - No findings matched for evidence item with matcher: {'cwe_match': 999999}
+2025-06-03 00:57:02,180 - INFO - Generating VXDF document for 0 findings
+2025-06-03 00:57:02,180 - INFO - Correlated 0 findings into 0 groups
+2025-06-03 00:57:02,180 - INFO - No security findings detected - creating summary flow
+2025-06-03 00:57:02,180 - INFO - Generated VXDF document with 1 exploit flows
+2025-06-03 00:57:02,181 - INFO - 127.0.0.1 - - [03/Jun/2025 00:57:02] "POST /api/upload HTTP/1.1" 200 -
+2025-06-03 00:58:03,342 - INFO -  * Detected change in '/Users/mihir.shah/projects/vxdf/validate_fraud_fixes.py', reloading
+2025-06-03 00:58:03,881 - INFO - Starting VXDF Validate server on port 5001
+2025-06-03 00:58:03,881 - INFO - Project root: /Users/mihir.shah/projects/vxdf
+2025-06-03 00:58:03,882 - INFO - API directory: /Users/mihir.shah/projects/vxdf/api
+2025-06-03 00:58:03,882 - INFO - Python path: ['/Users/mihir.shah/projects/vxdf', '/Users/mihir.shah/projects/vxdf/api', '/Users/mihir.shah/.pyenv/versions/3.8.12/lib/python38.zip']...
+2025-06-03 00:58:03,882 - INFO - Initializing database...
+2025-06-03 00:58:03,882 - INFO - Creating database tables...
+2025-06-03 00:58:03,884 - INFO - Database tables created successfully.
+2025-06-03 00:58:03,884 - INFO - Database initialized successfully
+2025-06-03 00:58:03,889 - INFO - Importing API blueprint from api.api
+2025-06-03 00:58:03,891 - INFO - API blueprint registered successfully
+2025-06-03 00:58:03,891 - INFO - ✅ Server created successfully
+2025-06-03 00:58:03,915 - WARNING -  * Debugger is active!
+2025-06-03 00:58:03,922 - INFO -  * Debugger PIN: 108-751-198
+2025-06-03 00:58:09,519 - INFO - Initializing database...
+2025-06-03 00:58:09,519 - INFO - Creating database tables...
+2025-06-03 00:58:09,521 - INFO - Database tables created successfully.
+2025-06-03 00:58:09,521 - INFO - Database initialized successfully
+2025-06-03 00:58:09,525 - INFO - Importing API blueprint from api.api
+2025-06-03 00:58:09,527 - INFO - API blueprint registered successfully
+2025-06-03 00:58:09,528 - INFO - Parsing SARIF file: test_comprehensive_sarif.json
+2025-06-03 00:58:09,530 - INFO - Extracted 2 security findings from SARIF file
+2025-06-03 00:58:09,531 - INFO - Parsing DAST file: test_comprehensive_dast.json
+2025-06-03 00:58:09,531 - INFO - Extracted 1 security findings from DAST file

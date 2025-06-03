@@ -112,24 +112,11 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 
-# Project specific temporary files
+# Project specific
+logs/
+*.log
+data/*.db
+output/
 .breakpoints
 .upm/
 
-# ===== AUTOMATION PIPELINE (HIDDEN) =====
-# Exclude automation tools and development pipeline
-ai-pipeline/
-automation/
-dev-tools/
-pipeline/
-.pipeline/
-auto-*
-*-automation/
-ci-scripts/
-dev-pipeline/
-build-automation/
-*.automation.log
-.auto-*
-automation.config
-pipeline.yaml
-auto-deploy/ 

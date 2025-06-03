@@ -5,16 +5,18 @@ import logging
 import json
 import uuid
 import re
+import urllib.parse
 import tempfile
 import os
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 
 from api.core.validator import Validator, ValidationResult
 from api.models.finding import Finding
+from api.models.vxdf import EvidenceTypeEnum
 from api.utils.docker_utils import DockerEnvironment
 from api.utils.http_utils import (
     make_request, inject_payload_in_params, 
-    inject_payload_in_body, detect_xss_reflection,
+    inject_payload_in_body, detect_xss_success,
     format_request_response
 )
 
@@ -33,18 +35,22 @@ class XSSValidator(Validator):
         self.name = "XSS Validator"
         self.payloads = [
             "<script>alert(1)</script>",
+            "<ScRiPt>alert(1)</ScRiPt>",
+            "<script>alert(String.fromCharCode(88,83,83))</script>",
             "<img src=x onerror=alert(1)>",
             "<svg onload=alert(1)>",
-            "<body onload=alert(1)>",
-            "\"><script>alert(1)</script>",
+            "<iframe src=javascript:alert(1)>",
             "javascript:alert(1)",
-            "<div style=\"background-image: url(javascript:alert(1))\">",
-            "<iframe src=\"javascript:alert(1)\"></iframe>",
-            "<input type=\"text\" onfocus=\"alert(1)\" autofocus>",
-            "<a href=\"javascript:alert(1)\">Click me</a>",
-            "'-alert(1)-'",
-            "<ScRiPt>alert(1)</ScRiPt>",
-            "<script>alert(String.fromCharCode(88,83,83))</script>"
+            "<body onload=alert(1)>",
+            "<input type=button onclick=alert(1) value=Click>",
+            "';alert(1);//",
+            "\";alert(1);//",
+            "<script>confirm(1)</script>",
+            "<script>prompt(1)</script>",
+            "'\"><script>alert(1)</script>",
+            "javascript:void(alert(1))",
+            "<script>location='http://evil.com'</script>",
+            "<script>document.cookie='stolen='+document.cookie</script>"
         ]
         self.docker_env = None
     
@@ -156,14 +162,14 @@ class XSSValidator(Validator):
                         timeout=10
                     )
                     
-                    # Check if payload is reflected in response
-                    if detect_xss_reflection(response, payload):
+                    # Check for XSS success in response
+                    if detect_xss_success(response, payload):
                         successful_payloads.append(payload)
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
-                            "description": f"XSS payload reflection: {payload}",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
+                            "description": f"XSS with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
                         evidence.append(evidence_item)
@@ -190,14 +196,14 @@ class XSSValidator(Validator):
                         timeout=10
                     )
                     
-                    # Check if payload is reflected in response
-                    if detect_xss_reflection(response, payload):
+                    # Check for XSS success in response
+                    if detect_xss_success(response, payload):
                         successful_payloads.append(payload)
                         
                         # Create evidence
                         evidence_item = {
-                            "type": "http_request",
-                            "description": f"XSS payload reflection: {payload}",
+                            "type": EvidenceTypeEnum.HTTP_REQUEST_LOG.value,
+                            "description": f"XSS with payload: {payload}",
                             "content": format_request_response(response.request, response)
                         }
                         evidence.append(evidence_item)
@@ -210,7 +216,7 @@ class XSSValidator(Validator):
         is_exploitable = len(successful_payloads) > 0
         
         if is_exploitable:
-            message = f"Confirmed XSS vulnerability. {len(successful_payloads)} payloads were successfully reflected: {', '.join(successful_payloads[:3])}"
+            message = f"Confirmed XSS vulnerability. {len(successful_payloads)} payloads successfully reflected: {', '.join(successful_payloads[:3])}"
         else:
             message = "Could not confirm XSS vulnerability. No test payloads were reflected in the response."
         
@@ -230,9 +236,6 @@ class XSSValidator(Validator):
         Returns:
             ValidationResult with details of validation
         """
-        # For SAST findings of XSS, we need to simulate a web application environment
-        # This is a simplified approach - in a real-world scenario, we would set up a more sophisticated test
-        
         # First check if we have file path and code to analyze
         if not finding.file_path:
             return ValidationResult(
@@ -240,7 +243,7 @@ class XSSValidator(Validator):
                 message="No file path available in finding to validate XSS"
             )
         
-        # Setup a Docker environment for testing
+        # Set up a Docker environment to validate the XSS
         try:
             self.docker_env = DockerEnvironment()
             if not self.docker_env.setup():
@@ -249,57 +252,30 @@ class XSSValidator(Validator):
                     message="Failed to set up Docker environment for validation"
                 )
             
-            # Create container with necessary packages
-            self.docker_env.create_container(name_prefix="xss_validator_", ports={8080: 8080})
+            self.docker_env.create_container(name_prefix="xss_validator_")
             
             # Install necessary packages
-            self.docker_env.install_python_package("flask")
-            self.docker_env.install_python_package("requests")
-            self.docker_env.install_python_package("beautifulsoup4")
+            self.docker_env.install_package("python3 python3-pip")
+            self.docker_env.execute_command("pip3 install beautifulsoup4 html5lib")
             
-            # Create a test application based on the finding
-            test_app_path = self._create_test_app(finding)
+            # Create a test script based on the finding
+            script_path = self._create_test_script(finding)
             
-            if not test_app_path:
-                return ValidationResult(
-                    is_exploitable=False,
-                    message="Failed to create test application for XSS validation"
-                )
-            
-            # Copy the test app to the container
-            if not self.docker_env.copy_to_container(test_app_path, "/tmp/test_xss_app.py"):
-                return ValidationResult(
-                    is_exploitable=False,
-                    message="Failed to copy test application to Docker container"
-                )
-            
-            # Create a test script to check for XSS
-            test_script_path = self._create_test_script()
-            
-            if not test_script_path:
+            if not script_path:
                 return ValidationResult(
                     is_exploitable=False,
                     message="Failed to create test script for XSS validation"
                 )
             
-            # Copy the test script to the container
-            if not self.docker_env.copy_to_container(test_script_path, "/tmp/test_xss.py"):
+            # Copy the script to the container
+            if not self.docker_env.copy_to_container(script_path, "/tmp/test_xss.py"):
                 return ValidationResult(
                     is_exploitable=False,
                     message="Failed to copy test script to Docker container"
                 )
             
-            # Start the test app in the background
-            self.docker_env.execute_command("nohup python /tmp/test_xss_app.py > /tmp/app.log 2>&1 &")
-            
-            # Wait for the app to start
-            self.docker_env.execute_command("sleep 2")
-            
             # Execute the test script
-            exit_code, stdout, stderr = self.docker_env.execute_command("python /tmp/test_xss.py")
-            
-            # Check application log if needed
-            app_log_code, app_log, _ = self.docker_env.execute_command("cat /tmp/app.log")
+            exit_code, stdout, stderr = self.docker_env.execute_command("python3 /tmp/test_xss.py")
             
             # Parse the results
             if exit_code != 0:
@@ -314,18 +290,18 @@ class XSSValidator(Validator):
                 successful_payloads = result.get("successful_payloads", [])
                 
                 evidence = []
-                for test in result.get("tests", []):
+                for payload_result in result.get("tests", []):
                     evidence_item = {
-                        "type": "xss_test",
-                        "description": f"XSS test with payload: {test['payload']}",
-                        "content": json.dumps(test, indent=2)
+                        "type": EvidenceTypeEnum.TEST_PAYLOAD_USED.value,
+                        "description": f"XSS test with payload: {payload_result['payload']}",
+                        "content": json.dumps(payload_result, indent=2)
                     }
                     evidence.append(evidence_item)
                 
                 if is_exploitable:
-                    message = f"Confirmed XSS vulnerability. {len(successful_payloads)} payloads were successfully reflected: {', '.join(successful_payloads[:3])}"
+                    message = f"Confirmed XSS vulnerability. {len(successful_payloads)} payloads were successful: {', '.join(successful_payloads[:3])}"
                 else:
-                    message = "Could not confirm XSS vulnerability. No test payloads were reflected in the response."
+                    message = "Could not confirm XSS vulnerability. No test payloads were successful."
                 
                 return ValidationResult(
                     is_exploitable=is_exploitable,
@@ -338,117 +314,20 @@ class XSSValidator(Validator):
                     is_exploitable=False,
                     message=f"Error parsing test results: {stdout}"
                 )
-        
+            
         finally:
             # Clean up
             if self.docker_env:
                 self.docker_env.cleanup()
                 self.docker_env = None
     
-    def _create_test_app(self, finding: Finding) -> Optional[str]:
+    def _create_test_script(self, finding: Finding) -> Optional[str]:
         """
-        Create a Flask application for testing XSS.
+        Create a Python script to test for XSS.
         
         Args:
             finding: The finding to validate
             
-        Returns:
-            Path to the created application, or None if failed
-        """
-        try:
-            # Create a temporary file
-            fd, path = tempfile.mkstemp(suffix=".py", prefix="xss_test_app_")
-            
-            # Generate application code
-            code = """
-from flask import Flask, request, render_template_string
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return '''
-        <html>
-            <head><title>XSS Test</title></head>
-            <body>
-                <h1>XSS Test Application</h1>
-                <form action="/echo" method="GET">
-                    <input type="text" name="input" placeholder="Enter some text">
-                    <button type="submit">Submit</button>
-                </form>
-                <form action="/echo_post" method="POST">
-                    <input type="text" name="input" placeholder="Enter some text">
-                    <button type="submit">Submit (POST)</button>
-                </form>
-            </body>
-        </html>
-    '''
-
-@app.route('/echo')
-def echo():
-    # Vulnerable to XSS - directly echoes user input
-    user_input = request.args.get('input', '')
-    return '''
-        <html>
-            <head><title>XSS Test</title></head>
-            <body>
-                <h1>Echo Result</h1>
-                <div>You entered: %s</div>
-                <a href="/">Back</a>
-            </body>
-        </html>
-    ''' % user_input
-
-@app.route('/echo_post', methods=['POST'])
-def echo_post():
-    # Also vulnerable to XSS
-    user_input = request.form.get('input', '')
-    return '''
-        <html>
-            <head><title>XSS Test</title></head>
-            <body>
-                <h1>Echo Result (POST)</h1>
-                <div>You entered: %s</div>
-                <a href="/">Back</a>
-            </body>
-        </html>
-    ''' % user_input
-
-@app.route('/safe')
-def safe():
-    # Safe version - escapes user input
-    user_input = request.args.get('input', '')
-    # Escape HTML special characters
-    user_input = user_input.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-    return '''
-        <html>
-            <head><title>XSS Test</title></head>
-            <body>
-                <h1>Safe Echo Result</h1>
-                <div>You entered: %s</div>
-                <a href="/">Back</a>
-            </body>
-        </html>
-    ''' % user_input
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
-"""
-            
-            # Write the code to the file
-            with os.fdopen(fd, 'w') as f:
-                f.write(code)
-            
-            return path
-        
-        except Exception as e:
-            logger.error(f"Error creating test application: {e}", exc_info=True)
-            return None
-    
-    def _create_test_script(self) -> Optional[str]:
-        """
-        Create a Python script to test for XSS.
-        
         Returns:
             Path to the created script, or None if failed
         """

@@ -1,17 +1,23 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/layout/Layout';
-import Dashboard from './components/dashboard/Dashboard';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
+import Vulnerabilities from './pages/Vulnerabilities';
+import VulnerabilityDetail from './pages/VulnerabilityDetail';
+import ValidationWorkflows from './pages/ValidationWorkflows';
+import UploadScan from './pages/UploadScan';
 
 function App() {
   return (
-    <Router>
+    <Layout>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-        </Route>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/vulnerabilities" element={<Vulnerabilities />} />
+        <Route path="/vulnerabilities/:id" element={<VulnerabilityDetail />} />
+        <Route path="/validation" element={<ValidationWorkflows />} />
+        <Route path="/upload" element={<UploadScan />} />
       </Routes>
-    </Router>
+    </Layout>
   );
 }
 
-export default App;
+export default App; 

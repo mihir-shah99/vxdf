@@ -3,10 +3,10 @@
 Main entry point for the VXDF Validate API.
 """
 import os
+import sys
 import logging
 import argparse
 from pathlib import Path
-import sys
 
 # Configure logging
 logging.basicConfig(
@@ -15,21 +15,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Add the current directory to path to help with imports
-current_dir = Path(__file__).resolve().parent
-project_root = current_dir.parent
-sys.path.insert(0, str(project_root))
+# Fix import paths - add project root to Python path
+API_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = API_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+if str(API_DIR) not in sys.path:
+    sys.path.insert(0, str(API_DIR))
 
 try:
-    # Import server and API modules
-    from api.server import create_app
-    from api.api import api_bp
+    # Import server and API modules with path resolution
+    try:
+        from api.server import create_app
+        from api.api import api_bp
+        logger.info("Imported from api.* (project root context)")
+    except ImportError:
+        from server import create_app
+        from api import api_bp
+        logger.info("Imported from local modules (api directory context)")
     
     # Create the Flask app
     app = create_app()
-    logger.info("Flask app created")
-    
-    # Register API blueprint - removed as it's already done in create_app()
+    logger.info("✅ Flask app created successfully")
     
     if __name__ == "__main__":
         # Parse command line arguments
@@ -40,7 +47,11 @@ try:
         # Use the port from command line arguments
         port = args.port
         logger.info(f"Starting VXDF Validate on port {port}")
+        logger.info(f"Project root: {PROJECT_ROOT}")
+        logger.info(f"API directory: {API_DIR}")
+        
         app.run(host="0.0.0.0", port=port, debug=True)
+        
 except Exception as e:
-    logger.error(f"Failed to start server: {e}", exc_info=True)
+    logger.error(f"❌ Failed to start server: {e}", exc_info=True)
     sys.exit(1) 

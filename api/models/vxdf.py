@@ -1097,7 +1097,7 @@ class ValidationItemModel(BaseModel):
     validationId: Optional[UUID] = Field(default_factory=uuid4, description="Optional unique ID for this validation item.")
     validatorName: str = Field(..., description="Name or identifier of the validator (e.g., tester name, automated tool name).")
     engineInfo: Optional[ValidationEngineModel] = Field(None, description="Details of the validation engine used, if applicable.")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(datetime.UTC), description="Timestamp of when the validation was performed. Assumed to be UTC.")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(datetime.timezone.utc), description="Timestamp of when the validation was performed. Assumed to be UTC.")
     method: ValidationMethodEnum = Field(..., description="The method used for this validation step.")
     conclusion: str = Field(..., description="The outcome or conclusion of this validation step (e.g., 'Vulnerability Confirmed', 'False Positive').")
     description: Optional[str] = Field(None, description="Detailed notes or observations from the validator.")
